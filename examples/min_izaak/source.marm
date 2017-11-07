@@ -2,7 +2,7 @@ frontend javascript function change_element(value: Int) {
     document.getElementById("p1").innerHTML = value;
 }
 
-frontend function get_counter() -> Int {
+frontend function get_counter() {
     let x: Int = handle_counter();
     change_element(x)
 }
