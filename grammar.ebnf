@@ -1,0 +1,15 @@
+<Start> ::= { <Location> <GlobalDecl> }
+
+<GlobalDecl> ::= <Function> | <Type> <Name> "=" <Const>
+<Function> ::= { <FKeywords> } "function" <Name> "(" <Params> ")" "{" { <Statement> } "}"
+
+<Statement> ::= <Declaration> | <Assignment> | <Discard>
+
+<Declaration> ::= <Type> <Name> "=" <Expr>
+<Assignment> ::= <Name> "=" <Expr>
+<Discard> ::= <Expr>
+
+
+
+<Params> ::=
+<Name> ::=
