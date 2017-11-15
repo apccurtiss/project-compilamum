@@ -3,8 +3,8 @@
 <GlobalDecl> ::= <Function> | <Type> <Name> "=" <Const>
 <Function> ::= { <FKeywords> } "function" <Name> "(" <Params> ")" "{" { <Statement> } "}"
 
-<Statement> ::= <If> | <While> | <Single> | "break" | "continue"
-<Single> ::= <Declaration> | <Assignment> | <Discard>
+<Statement> ::= <If> | <While> | <Single>
+<Single> ::= <Declaration> | <Assignment> | <Discard> | <Return> | "break" | "continue"
 <If> ::= "if" <Expr> "{" { <Statement> } "}" "else" "{" { <Statement> } "}"
 <While> ::= "while" <Expr> "{" { <Statement> } "}"
 
@@ -24,4 +24,4 @@
 <Args> ::= {<Expr> "," }
 <Params> ::= {<Type> <Name> "," }
 <Name> ::= ### Names! alphanumeric, dashes, underscores, etc ###
-<Type> ::= "String" | "Num" | "List" | "Struct"
+<Type> ::= "String" | "Num" | "List" | "Struct" | "Void"
