@@ -5,7 +5,7 @@
 
 <Statement> ::= <If> | <While> | <Single> | "break" | "continue"
 <Single> ::= <Declaration> | <Assignment> | <Discard>
-<If> ::= "if" <Expr> "{" { <Statement> } "}" "else" "{" { <Statement> } "}""
+<If> ::= "if" <Expr> "{" { <Statement> } "}" "else" "{" { <Statement> } "}"
 <While> ::= "while" <Expr> "{" { <Statement> } "}"
 
 <Declaration> ::= <Type> <Name> "=" <Expr>
@@ -24,5 +24,4 @@
 <Args> ::= {<Expr> "," }
 <Params> ::= {<Type> <Name> "," }
 <Name> ::= ### Names! alphanumeric, dashes, underscores, etc ###
-<Javascript> ::= ### Literally just Javascript! Not handled by us. ###
 <Type> ::= "String" | "Num" | "List" | "Struct"
