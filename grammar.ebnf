@@ -1,7 +1,8 @@
 <Start> ::= { <Location> <GlobalDecl> }
 
-<GlobalDecl> ::= <Function> | <Type> <Name> "=" <Const>
-<Function> ::= { <FKeywords> } "function" <Name> "(" <Params> ")" "{" { <Statement> } "}"
+<GlobalDecl> ::= <Function> | <Type> <Name> "=" <Const> | <Import>
+<Import> ::= "import" <Javascript> "as" <Name> "(" <Params> ")"
+<Function> ::= "function" <Name> "(" <Params> ")" "{" { <Statement> } "}"
 
 <Statement> ::= <If> | <While> | <Single>
 <Single> ::= <Declaration> | <Assignment> | <Discard> | <Return> | "break" | "continue"
@@ -13,13 +14,19 @@
 <Discard> ::= <Expr>
 <Return> ::= "return" <Expr>
 
-<Expr> ::= <Call> | <Operation>
-<Operation> ::= ### However many operations we want to add :) ###
+<Expr> ::= <Call> | <Operation> | <List> | <Dictionary> | <Const>
+<Operation> ::= <Expr> "+" <Expr> | <Expr> "*" <Expr> | <Expr> "/" <Expr> | <Expr> "-" <Expr>
+              | <Expr> "^" <Expr> | <Expr> "++" <Expr> | <Expr> "and" <Expr> | <Expr> "or" <Expr>
+              | <Expr> "==" <Expr> | <Expr> ">" <Expr> | <Expr> "<" <Expr> | <Expr> ">=" <Expr>
+              | <Expr> "<=" <Expr> | <Expr> "!=" <Expr>
 <Call> ::= <Name> "(" <Args> ")"
-<String> ::= ### You know, a string ###
-<Number> ::= ### Floating point stuff ###
 <List> ::= "[" {<Expr> ","} "]"
 <Dictionary> ::= "{" {<Expr>:<Expr> ","} "}"
+
+<Const> ::= <String> | <Number> | <Bool>
+<Bool> ::= "True" | "False"
+<String> ::= ### You know, a string ###
+<Number> ::= ### Floating point stuff ###
 
 <Args> ::= {<Expr> "," }
 <Params> ::= {<Type> <Name> "," }
