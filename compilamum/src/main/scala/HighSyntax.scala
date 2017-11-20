@@ -13,7 +13,7 @@ abstract class Op
 case class Plus() extends Op
 
 abstract class Expr
-case class Call(name: Expr, params: List[Expr]) extends Expr
+case class Call(name: Expr, arguments: List[Expr]) extends Expr
 case class ListExpr(items: List[Expr]) extends Expr
 case class DictExpr(items: Map[Expr, Expr]) extends Expr
 case class Bop(op: Op, left: Expr, right: Expr) extends Expr
@@ -32,3 +32,7 @@ case class Discard(value: Expr) extends Stmt
 case class Return(value: Expr) extends Stmt
 case class If(condition: Expr, then: List[Stmt], orelse: List[Stmt]) extends Stmt
 case class While(condition: Expr, body: List[Stmt]) extends Stmt
+
+abstract class Global
+case class Create(at: Location, to: String, mtype: MType, from: Expr) extends Global
+case class Function(at: Location, name: String, params: List[(String, MType)], rtype: MType) extends Global
