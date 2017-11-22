@@ -20,9 +20,9 @@ case class Grtr() extends Op // ">"
 case class Neq() extends Op // "!=" 
 case class Div() extends Op // "/"
 case class And() extends Op // "and" 
-case class Or() extends Op // "<"
-case class Lstn() extends Op // "-"
-case class Minus() extends Op //  "or"
+case class Or() extends Op // "or"
+case class Lstn() extends Op // "<"
+case class Minus() extends Op  // "-"
 case class Greq() extends Op // ">="
 
 abstract class Expr extends Node

@@ -1,27 +1,38 @@
-<Start> ::= { <Global> }
+<Start> ::= <Program>
+<Program> ::= { <Global> }
 
 <Global> ::= <GlobalDecl> | <Import> | <Function>
 <GlobalDecl> ::= <Location> <Type> <Name> "=" <Const>]
 <Import> ::= "import" <Location> <Javascript> "as" <Name> "(" <Params> ")"
 <Function> ::= <Location> <Type> <Name> "(" <Params> ")" <Statement>
 
-<Statement> ::= <If> | <While> | <Single> ";" | "{" { <Statement> } "}"
-<Single> ::= <Declaration> | <Assignment> | <Discard> | <Return> | "break" | "continue"
+<Statement> ::= <If> | <While> | <Single> ";" | <Statements>
+<Statements> ::= "{" { <Statement> } "}"
 <If> ::= "if" "(" <Expr> ")" <Statement> ["else"  <Statement> ]
 <While> ::= "while" "(" <Expr> ")" <Statement>
+<Single> ::= <Declaration> | <Assignment> | <Discard> | <Return> | "break" | "continue"
 
 <Declaration> ::= <Type> <Name> "=" <Expr>
 <Assignment> ::= <Name> "=" <Expr>
 <Discard> ::= <Expr>
 <Return> ::= "return" <Expr>
 
-<Expr> ::= <Call> | <BinaryOp> | <UnaryOp> | <List> | <Dictionary> | <Const>
-<BinaryOp> ::= <Expr> <Op> <Expr> 
-<UnaryOp> ::= <Op> <Expr> 
-<Op> ::= "+" | "^" | "==" | "<=" | "*" | ">" | "!=" | "/" | "and" | "<" | "-" | "or" | ">="
+<Expr> ::= <BoolExpr> [<EqualOp> <BoolExpr>]
+<BoolExpr> ::= <P/MExpr> {<BoolOp> <P/MExpr>}
+<P/MExpr> ::= <M/DExpr> {<P/MOp> <M/DExpr>}
+<M/DExpr> ::= <ExpExpr> {<M/DOp> <ExpExpr>}
+<ExpExpr> ::= <UnaryExpr> {<ExpOp> <UnaryExpr>}
+<UnaryExpr> ::= {<UnaryOp>} <Atom>
+<Atom> ::= <Call> | <List> | <Dictionary> | <Const> | "(" <Expr> ")"
 <Call> ::= <Name> "(" <Args> ")"
 <List> ::= "[" [<Expr> {"," <Expr>}] "]"
 <Dictionary> ::= "{" [<Expr>":"<Expr> {"," <Expr>":"<Expr>}] "}"
+<EqualOp> ::= "==" | "!=" | ">" | "<" | ">=" | "<="
+<BoolOp> ::= "and" | "or"
+<P/MOp> ::= "+" | "-"
+<M/DOp> ::= "*" | "/"
+<ExpOp> ::= "^"
+<UnaryOp> ::= "-" | "+"
 
 <Const> ::= <String> | <Number> | <Bool>
 <Bool> ::= "True" | "False"
