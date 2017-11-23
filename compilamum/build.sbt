@@ -1,12 +1,8 @@
-import Dependencies._
+name := "compilamum"
+version := "1.0"
+scalaVersion := "2.11.8"
 
-lazy val root = (project in file(".")).
-  settings(
-    inThisBuild(List(
-      organization := "com.example",
-      scalaVersion := "2.12.3",
-      version      := "0.1.0-SNAPSHOT"
-    )),
-    name := "compilamum",
-    libraryDependencies += scalaTest % Test
-  )
+libraryDependencies ++= Seq(
+  "org.scalatest"           %% "scalatest"                % "2.2.6" % "test",
+  "org.scala-lang.modules"  %% "scala-parser-combinators" % "1.0.4"
+)
