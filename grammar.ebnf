@@ -1,34 +1,47 @@
-<Start> ::= { <Location> <GlobalDecl> }
+<Start> ::= <Program>
+<Program> ::= { <Global> }
 
-<GlobalDecl> ::= <Function> | <Type> <Name> "=" <Const> | <Import>
-<Import> ::= "import" <Javascript> "as" <Name> "(" <Params> ")"
-<Function> ::= "function" <Name> "(" <Params> ")" "{" { <Statement> } "}"
+<Global> ::= <GlobalDecl> | <Import> | <Function>
+<GlobalDecl> ::= <Location> <Type> <Name> "=" <Const> ";"
+<Import> ::= "import" <Location> <Javascript> "as" <Name> "(" <Params> ")" ";"
+<Function> ::= <Location> <Type> <Name> "(" <Params> ")" <Statement>
 
-<Statement> ::= <If> | <While> | <Single>
+<Statement> ::= <If> | <While> | <Single> ";" | <Statements>
+<Statements> ::= "{" { <Statement> } "}"
+<If> ::= "if" "(" <Expr> ")" <Statement> ["else"  <Statement> ]
+<While> ::= "while" "(" <Expr> ")" <Statement>
 <Single> ::= <Declaration> | <Assignment> | <Discard> | <Return> | "break" | "continue"
-<If> ::= "if" <Expr> "{" { <Statement> } "}" "else" "{" { <Statement> } "}"
-<While> ::= "while" <Expr> "{" { <Statement> } "}"
 
 <Declaration> ::= <Type> <Name> "=" <Expr>
 <Assignment> ::= <Name> "=" <Expr>
 <Discard> ::= <Expr>
 <Return> ::= "return" <Expr>
 
-<Expr> ::= <Call> | <Operation> | <List> | <Dictionary> | <Const>
-<Operation> ::= <Expr> "+" <Expr> | <Expr> "*" <Expr> | <Expr> "/" <Expr> | <Expr> "-" <Expr>
-              | <Expr> "^" <Expr> | <Expr> "++" <Expr> | <Expr> "and" <Expr> | <Expr> "or" <Expr>
-              | <Expr> "==" <Expr> | <Expr> ">" <Expr> | <Expr> "<" <Expr> | <Expr> ">=" <Expr>
-              | <Expr> "<=" <Expr> | <Expr> "!=" <Expr>
+<Expr> ::= <BoolExpr> [<EqualOp> <BoolExpr>]
+<BoolExpr> ::= <P/MExpr> {<BoolOp> <P/MExpr>}
+<P/MExpr> ::= <M/DExpr> {<P/MOp> <M/DExpr>}
+<M/DExpr> ::= <ExpExpr> {<M/DOp> <ExpExpr>}
+<ExpExpr> ::= <UnaryExpr> {<ExpOp> <UnaryExpr>}
+<UnaryExpr> ::= {<UnaryOp>} <Atom>
+<Atom> ::= <Call> | <List> | <Dictionary> | <Const> | "(" <Expr> ")"
 <Call> ::= <Name> "(" <Args> ")"
-<List> ::= "[" {<Expr> ","} "]"
-<Dictionary> ::= "{" {<Expr>:<Expr> ","} "}"
+<List> ::= "[" [<Expr> {"," <Expr>}] "]"
+<Dictionary> ::= "{" [<Expr>":"<Expr> {"," <Expr>":"<Expr>}] "}"
+<EqualOp> ::= "==" | "!=" | ">" | "<" | ">=" | "<="
+<BoolOp> ::= "and" | "or"
+<P/MOp> ::= "+" | "-"
+<M/DOp> ::= "*" | "/"
+<ExpOp> ::= "^"
+<UnaryOp> ::= "-" | "+"
 
 <Const> ::= <String> | <Number> | <Bool>
 <Bool> ::= "True" | "False"
-<String> ::= ### You know, a string ###
-<Number> ::= ### Floating point stuff ###
+<String> ::= regex("(:?[^\"]|\\\")*")
+<Number> ::= regex("\d+(:?\.\d*)?|\.\d+")
 
-<Args> ::= {<Expr> "," }
-<Params> ::= {<Type> <Name> "," }
-<Name> ::= ### Names! alphanumeric, dashes, underscores, etc ###
-<Type> ::= "String" | "Num" | "List" | "Struct" | "Void"
+<Args> ::= [<Expr> {"," <Expr>}]
+<Params> ::= [<Type> <Name> {"," <Type> <Name>}]
+<Name> ::= regex("[\w_][\w_\d]*")
+<Type> ::= "string" | "num" | "list" | "struct" | "void"
+
+<JavaScript> ::= <String>
