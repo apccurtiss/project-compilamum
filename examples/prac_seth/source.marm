@@ -1,10 +1,8 @@
-frontend javascript function change_element(value: Int) {
-    document.getElementById("p1").innerHTML = value;
-}
+import frontend "document.getElementById(id).innerHTML = value;" as change_element(id:string, value:Int);
 
 frontend function get_counter() {
     let x: Int = handle_counter();
-    change_element(x)
+    change_element("p1",x)
 }
 
 let backend i: Int = 0;

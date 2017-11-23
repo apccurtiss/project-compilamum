@@ -2,8 +2,8 @@
 <Program> ::= { <Global> }
 
 <Global> ::= <GlobalDecl> | <Import> | <Function>
-<GlobalDecl> ::= <Location> <Type> <Name> "=" <Const>]
-<Import> ::= "import" <Location> <Javascript> "as" <Name> "(" <Params> ")"
+<GlobalDecl> ::= <Location> <Type> <Name> "=" <Const> ";"
+<Import> ::= "import" <Location> <Javascript> "as" <Name> "(" <Params> ")" ";"
 <Function> ::= <Location> <Type> <Name> "(" <Params> ")" <Statement>
 
 <Statement> ::= <If> | <While> | <Single> ";" | <Statements>
@@ -43,3 +43,5 @@
 <Params> ::= [<Type> <Name> {"," <Type> <Name>}]
 <Name> ::= regex("[\w_][\w_\d]*")
 <Type> ::= "string" | "num" | "list" | "struct" | "void"
+
+<JavaScript> ::= <String>
