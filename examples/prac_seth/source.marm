@@ -1,11 +1,11 @@
 import frontend "document.getElementById(id).innerHTML = value;" as change_element(id:string, value:Int);
 
-frontend function get_counter() {
-    let x: Int = handle_counter();
+frontend function get_counter() -> Void {
+    int x = handle_counter();
     change_element("p1",x)
 }
 
-let backend i: Int = 0;
+backend int i = 0;
 
 backend function handle_counter() -> Int {
     i = i + 1;
