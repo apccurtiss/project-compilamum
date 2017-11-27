@@ -36,7 +36,7 @@ object Parseamum extends RegexParsers {
 
   def const: Parser[Expr] = bool | string | number
   def bool: Parser[Literal] = "(True)|(False)".r ^^ { b => ConstBool(b == "True") }
-  def string: Parser[Literal] = ("\"" ~> "(:?[^\"]|\\\")*".r <~ "\"") ^^ { s => ConstString(s) }
+  def string: Parser[Literal] = ("\"" ~> "[^\"]*".r <~ "\"") ^^ { s => ConstString(s) }
   def number: Parser[Literal] = "\\d+(:?\\.\\d*)?|\\.\\d+".r ^^ { n => ConstFloat(n.toDouble) }
 
   def name: Parser[Literal] = "[\\w_][\\w_\\d]*".r ^^ { x => Name(x) }
@@ -63,8 +63,8 @@ object Parseamum extends RegexParsers {
     }
   }
   def expr: Parser[Expr] = as
-  def wloop: Parser[Stmt] =  ("while" ~> "(" ~> expr <~ ")") ~ ("{" ~> rep(stmt) <~ "}") ^^ {
-    case cond ~ body => While(cond, Stmts(body))
+  def wloop: Parser[Stmt] =  ("while" ~> "(" ~> expr <~ ")") ~ stmt ^^ {
+    case cond ~ body => While(cond, body)
   }
   def discard: Parser[Stmt] = (expr <~ ";") ^^ Discard
   def stmt: Parser[Stmt] = discard | wloop
