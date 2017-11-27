@@ -23,7 +23,7 @@
 <M/DExpr> ::= <ExpExpr> {<M/DOp> <ExpExpr>}
 <ExpExpr> ::= <UnaryExpr> {<ExpOp> <UnaryExpr>}
 <UnaryExpr> ::= {<UnaryOp>} <Atom>
-<Atom> ::= <Call> | <List> | <Dictionary> | <Const> | "(" <Expr> ")"
+<Atom> ::= <Call> | <List> | <Dictionary> | <Const> | <Name> | "(" <Expr> ")"
 <Call> ::= <Name> "(" <Args> ")"
 <List> ::= "[" [<Expr> {"," <Expr>}] "]"
 <Dictionary> ::= "{" [<Expr>":"<Expr> {"," <Expr>":"<Expr>}] "}"
