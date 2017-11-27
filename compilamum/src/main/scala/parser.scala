@@ -17,7 +17,7 @@ object Parseamum extends RegexParsers {
   override def skipWhitespace = true
   override val whiteSpace = "[ \t\r\f]+".r
 
-  def apply(code: String): Either[ParseError, List[ast.Node]] = {
+  def apply(code: String): Either[ParseError, List[Node]] = {
     parse(program, code) match {
       case NoSuccess(msg, next) => Left(ParseError(next.pos.line-1, next.pos.column-1, msg))
 
@@ -25,39 +25,47 @@ object Parseamum extends RegexParsers {
     }
   }
 
-  def program: Parser[List[ast.Node]] = phrase(rep(global)) | failure("Reached EOF")
+  def program: Parser[List[Node]] = phrase(rep(stmt)) | failure("Reached EOF")
 
-  def global: Parser[ast.Node] = global_decl | import_stmt | function
-  def global_decl: Parser[ast.Node] = location ~ typ ~ name ~ "=" ~> expr <~ ";"
-  def import_stmt: Parser[ast.Node] = "import" ~> location ~ "as" ~> name ~ \
-    ("(" ~> params <~ ")" <~ ";"
+  // THESE ARE COMMENTED OUT BECAUSE THEY ARE CORRECT BUT DO NOT COMPILE
+  //def global: Parser[Global] = global_decl | import_stmt | function
+  //def global_decl: Parser[Global] = location ~ typ ~ name ~ "=" ~> expr <~ ";"
+  //def import_stmt: Parser[Global] = "import" ~> location ~ "as" ~> name ~ ("(" ~> params <~ ")") <~ ";"
 
-  def atom: Parser[ast.Node] = const | name | "(" ~> expr <~ ")" | failure("Unexpected end of line.")
+  def atom: Parser[Expr] = const | name | "(" ~> expr <~ ")" | failure("Unexpected end of line.")
 
-  def bool: Parser[ast.Node] = "(True)|(False)".r ^^ { b => ast.ConstBool(n == "True") }
-  def string: Parser[ast.Node] = "(:?[^\"]|\\\")*".r ^^ { s => ast.ConstString(s) }
-  def number: Parser[ast.Node] = "\\d+(:?\\.\\d*)?|\\.\\d+".r ^^ { n => ast.ConstFloat(n.toFloat) }
+  def const: Parser[Expr] = bool | string | number
+  def bool: Parser[Literal] = "(True)|(False)".r ^^ { b => ConstBool(b == "True") }
+  def string: Parser[Literal] = ("\"" ~> "(:?[^\"]|\\\")*".r <~ "\"") ^^ { s => ConstString(s) }
+  def number: Parser[Literal] = "\\d+(:?\\.\\d*)?|\\.\\d+".r ^^ { n => ConstFloat(n.toDouble) }
 
-  def name: Parser[ast.Node] = "[\\w_][\\w_\\d]*".r ^^ { x => ast.Name(x) }
+  def name: Parser[Literal] = "[\\w_][\\w_\\d]*".r ^^ { x => Name(x) }
 
-  def md: Parser[AST] = atom ~ rep("*" ~ atom | "/" ~ atom) ^^ {
+  def md: Parser[Expr] = atom ~ rep("*" ~ atom | "/" ~ atom) ^^ {
     case l ~ list => (l /: list) {
-      case (Literal(l), "*" ~ Literal(r)) => Literal(l * r)
-      case (Literal(l), "/" ~ Literal(r)) => Literal(l / r)
-      case (acc, op ~ next) => Bop(acc, op, next)
+      case (ConstFloat(l), "*" ~ ConstFloat(r)) => ConstFloat(l * r)
+      case (ConstFloat(l), "/" ~ ConstFloat(r)) => ConstFloat(l / r)
+      case (acc, op ~ next) => op match {
+        case "*" => Bop(Times(), acc, next)
+        case "/" => Bop(Div(), acc, next)
+      }
     }
   }
 
-  def as: Parser[AST] = md ~ rep("+" ~ md | "-" ~ md) ^^ {
+  def as: Parser[Expr] = md ~ rep("+" ~ md | "-" ~ md) ^^ {
     case l ~ list => (l /: list) {
-      case (Literal(l), "+" ~ Literal(r)) => Literal(l + r)
-      case (Literal(l), "-" ~ Literal(r)) => Literal(l - r)
-      case (acc, op ~ next) => BinOp(acc, op, next)
+      case (ConstFloat(l), "+" ~ ConstFloat(r)) => ConstFloat(l + r)
+      case (ConstFloat(l), "-" ~ ConstFloat(r)) => ConstFloat(l - r)
+      case (acc, op ~ next) => op match {
+        case "+" => Bop(Plus(), acc, next)
+        case "-" => Bop(Minus(), acc, next)
+      }
     }
   }
-  def expr: Parser[AST] = as
-  def wloop: Parser[AST] =  ("while" ~> "(" ~> expr <~ ")") ~ ("{" ~> rep(stmt) <~ "}") ^^ {
-    case cond ~ body => While(cond, body)
+  def expr: Parser[Expr] = as
+  def wloop: Parser[Stmt] =  ("while" ~> "(" ~> expr <~ ")") ~ ("{" ~> rep(stmt) <~ "}") ^^ {
+    case cond ~ body => While(cond, Stmts(body))
   }
-  def stmt: Parser[AST] = expr <~ ";" | wloop
+  def discard: Parser[Stmt] = (expr <~ ";") ^^ Discard
+  def stmt: Parser[Stmt] = discard | wloop
 }

@@ -1,5 +1,8 @@
 package ast
 
+// for easy typing of the functions
+abstract class Node
+
 abstract class Location extends Node
 case class Backend() extends Location
 case class Frontend() extends Location
@@ -35,7 +38,7 @@ case class Uop(op: Op, expr: Expr) extends Expr
 // This may be useful to have in case of base cases
 abstract class Literal extends Expr
 case class Name(id: String) extends Literal
-case class ConstFloat(value: Float) extends Literal
+case class ConstFloat(value: Double) extends Literal
 case class ConstString(value: String) extends Literal
 case class ConstBool(value: Boolean) extends Literal
 case class ListExpr(items: List[Expr]) extends Literal
@@ -50,7 +53,7 @@ case class Discard(value: Expr) extends Stmt
 case class Return(value: Expr) extends Stmt
 case class If(condition: Expr, then: Stmt, orelse: Stmt) extends Stmt
 case class While(condition: Expr, body: Stmt) extends Stmt
-case class Stmts(first: Stmt, second: Stmt) extends Stmt
+case class Stmts(body: List[Stmt]) extends Stmt
 
 abstract class Global extends Node
 case class FuncExpr(loc: Location, mtype: MType, name: String, params: Map[String,MType], body: Stmt) extends Global
@@ -59,6 +62,3 @@ case class Import(loc: Location, jsCode: String, name:String,params : Map[String
 
 // and there's the program over all:
 case class Program(body: List[Global]) extends Node
-
-// for easy typing of the functions
-abstract class Node

@@ -2,7 +2,7 @@ import parser.{Parseamum,ParseError}
 
 object Main {
   def main(args: Array[String]) = {
-    val code = "while (1 + 1) { 1 +2; }"
+    val code = "1 + 1;"
     Parseamum(code) match {
       case Left(ParseError(line, column, msg)) => {
         println("Error: " + msg)
