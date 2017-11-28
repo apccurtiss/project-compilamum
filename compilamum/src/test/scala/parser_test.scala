@@ -31,10 +31,20 @@ class ParsingSpec extends FlatSpec with Matchers {
   }
   
   it should "be able to parse if statements" in {
-    Parseamum("if (1) 1; else 2;") should be (Right(List(If(ConstFloat(1.0),Discard(ConstFloat(1.0)),Discard(ConstFloat(2.0))))))
+    Parseamum("if (1) 1; else 2;") should be (Right(List(
+      If(ConstFloat(1.0),Discard(ConstFloat(1.0)),
+      Discard(ConstFloat(2.0)))
+    )))
   }
   
-  it should "be able to parse assignments" in {
-    Parseamum("x = 45;") should be (Right(List(Assign("x", ConstFloat(45.0)))))
+  it should "be able to parse variable declarations and assignments" in {
+    Parseamum("let x: Number = 0; x = 45;") should be (Right(List(
+      Declare("x", Num(), ConstFloat(0.0)),
+      Assign("x", ConstFloat(45.0))
+    )))
+  }
+  
+  it should "be able to parse return values" in {
+    Parseamum("return True;") should be (Right(List(Return(ConstBool(true)))))
   }
 }

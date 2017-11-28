@@ -40,6 +40,13 @@ object Parseamum extends RegexParsers {
 
   def name: Parser[Literal] = not("break" | "continue") ~> "[\\w_][\\w_\\d]*".r ^^ { x => Name(x) }
 
+  def mtype: Parser[MType] = ( "String" ^^^ Str()
+                           | "Number" ^^^ Num()
+                           | "List" ^^^ Ls()
+                           | "Dictionary" ^^^ Dict()
+                           | "Boolean" ^^^ Bool()
+                           | failure("Invalid type") )
+
   def md: Parser[Expr] = atom ~ rep("*" ~ atom | "/" ~ atom) ^^ {
     case l ~ list => (l /: list) {
       case (ConstFloat(l), "*" ~ ConstFloat(r)) => ConstFloat(l * r)
@@ -76,8 +83,12 @@ object Parseamum extends RegexParsers {
   
   def break: Parser[Stmt] = "break;".r ^^^ Break()
   def continue: Parser[Stmt] = "continue;".r ^^^ Continue()
+  def ret: Parser[Stmt] = ("return" ~> expr <~ ";") ^^ Return
   
   def assign: Parser[Stmt] = (name ~ ("=" ~> expr <~ ";")) ^^ { case Name(id) ~ e => Assign(id, e) }
+  def declare: Parser[Stmt] = ("let" ~> name) ~ (":" ~> mtype) ~ ("=" ~> expr <~ ";") ^^ {
+    case Name(id) ~ t ~ e => Declare(id, t, e)
+  }
   
-  def stmt: Parser[Stmt] = assign | discard | wloop | ifstmt | break | continue
+  def stmt: Parser[Stmt] = assign | discard | wloop | ifstmt | break | continue | declare | ret
 }
