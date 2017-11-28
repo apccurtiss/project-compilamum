@@ -34,15 +34,14 @@ abstract class Expr extends Node
 case class Call(name: Expr, args: List[Expr]) extends Expr
 case class Bop(op: Op, left: Expr, right: Expr) extends Expr
 case class Uop(op: Op, expr: Expr) extends Expr
+case class ListExpr(items: List[Expr]) extends Expr
+case class DictExpr(items: Map[Expr, Expr]) extends Expr
 
-// This may be useful to have in case of base cases
 abstract class Literal extends Expr
 case class Name(id: String) extends Literal
 case class ConstFloat(value: Double) extends Literal
 case class ConstString(value: String) extends Literal
 case class ConstBool(value: Boolean) extends Literal
-case class ListExpr(items: List[Expr]) extends Literal
-case class DictExpr(items: Map[Expr, Expr]) extends Literal
 
 abstract class Stmt extends Node
 case class Break() extends Stmt
@@ -58,7 +57,7 @@ case class Stmts(body: List[Stmt]) extends Stmt
 abstract class Global extends Node
 case class FuncExpr(loc: Location, mtype: MType, name: String, params: Map[String,MType], body: Stmt) extends Global
 case class GlobalDecl(loc: Location, to: String, mtype: MType, from: Expr) extends Global
-case class Import(loc: Location, jsCode: String, name:String,params : Map[String,MType]) extends Global
+case class Import(loc: Location, jsCode: String, name:String, params: Map[String,MType]) extends Global
 
 // and there's the program over all:
 case class Program(body: List[Global]) extends Node

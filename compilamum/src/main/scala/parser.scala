@@ -20,7 +20,6 @@ object Parseamum extends RegexParsers {
   def apply(code: String): Either[ParseError, List[Node]] = {
     parse(program, code) match {
       case NoSuccess(msg, next) => Left(ParseError(next.pos.line-1, next.pos.column-1, msg))
-
       case Success(result, next) => Right(result)
     }
   }
@@ -62,10 +61,18 @@ object Parseamum extends RegexParsers {
       }
     }
   }
+  
   def expr: Parser[Expr] = as
+  
   def wloop: Parser[Stmt] =  ("while" ~> "(" ~> expr <~ ")") ~ stmt ^^ {
     case cond ~ body => While(cond, body)
   }
+  
   def discard: Parser[Stmt] = (expr <~ ";") ^^ Discard
-  def stmt: Parser[Stmt] = discard | wloop
+  
+  def ifstmt: Parser[Stmt] = ("if" ~> "(" ~> expr <~ ")") ~ stmt ~ ("else" ~> stmt) ^^ {
+    case condition ~ then ~ orelse => If(condition, then, orelse)
+  }
+  
+  def stmt: Parser[Stmt] = discard | wloop | ifstmt
 }

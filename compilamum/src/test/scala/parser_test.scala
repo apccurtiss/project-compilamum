@@ -19,9 +19,14 @@ class ParsingSpec extends FlatSpec with Matchers {
   
   it should "reduce constant expressions during parsing" in {
     Parseamum("1 + 1;") should be (Right(List(Discard(ConstFloat(2.0)))))
+    Parseamum("1 + 11;") should be (Right(List(Discard(ConstFloat(12.0)))))
   }
   
   it should "be able to parse while loops" in {
     Parseamum("while (1) 1;") should be (Right(List(While(ConstFloat(1.0), Discard(ConstFloat(1.0))))))
+  }
+  
+  it should "be able to parse if statements" in {
+    Parseamum("if (1) 1; else 2;") should be (Right(List(If(ConstFloat(1.0),Discard(ConstFloat(1.0)),Discard(ConstFloat(2.0))))))
   }
 }
