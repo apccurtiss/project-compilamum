@@ -26,7 +26,15 @@ class ParsingSpec extends FlatSpec with Matchers {
     Parseamum("while (1) 1;") should be (Right(List(While(ConstFloat(1.0), Discard(ConstFloat(1.0))))))
   }
   
+  it should "be able to parse break statements" in {
+    Parseamum("while (1) break;") should be (Right(List(While(ConstFloat(1.0), Break()))))
+  }
+  
   it should "be able to parse if statements" in {
     Parseamum("if (1) 1; else 2;") should be (Right(List(If(ConstFloat(1.0),Discard(ConstFloat(1.0)),Discard(ConstFloat(2.0))))))
+  }
+  
+  it should "be able to parse assignments" in {
+    Parseamum("x = 45;") should be (Right(List(Assign("x", ConstFloat(45.0)))))
   }
 }

@@ -38,7 +38,7 @@ object Parseamum extends RegexParsers {
   def string: Parser[Literal] = ("\"" ~> "[^\"]*".r <~ "\"") ^^ { s => ConstString(s) }
   def number: Parser[Literal] = "\\d+(:?\\.\\d*)?|\\.\\d+".r ^^ { n => ConstFloat(n.toDouble) }
 
-  def name: Parser[Literal] = "[\\w_][\\w_\\d]*".r ^^ { x => Name(x) }
+  def name: Parser[Literal] = not("break" | "continue") ~> "[\\w_][\\w_\\d]*".r ^^ { x => Name(x) }
 
   def md: Parser[Expr] = atom ~ rep("*" ~ atom | "/" ~ atom) ^^ {
     case l ~ list => (l /: list) {
@@ -74,5 +74,10 @@ object Parseamum extends RegexParsers {
     case condition ~ then ~ orelse => If(condition, then, orelse)
   }
   
-  def stmt: Parser[Stmt] = discard | wloop | ifstmt
+  def break: Parser[Stmt] = "break;".r ^^^ Break()
+  def continue: Parser[Stmt] = "continue;".r ^^^ Continue()
+  
+  def assign: Parser[Stmt] = (name ~ ("=" ~> expr <~ ";")) ^^ { case Name(id) ~ e => Assign(id, e) }
+  
+  def stmt: Parser[Stmt] = assign | discard | wloop | ifstmt | break | continue
 }
