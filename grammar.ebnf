@@ -7,21 +7,20 @@
 <Function> ::= <Location> <Typ> <Name> "(" <Params> ")" <Stmt>
 <Locaiton> ::= "front" | "back"
 
-<Stmt> ::= <IfStmt> | <WhileStmt> | <Single> ";" | <Stmts>
-<Stmts> ::= "{" { <Stmt> } "}"
+<Stmt> ::= <IfStmt> | <WhileStmt> | <Single> ";" | <Block>
+<Block> ::= "{" { <Stmt> } "}"
 <IfStmt> ::= "if" "(" <Expr> ")" <Stmt> ["else"  <Stmt> ]
 <WhileStmt> ::= "while" "(" <Expr> ")" <Stmt>
 <Single> ::= <Declare> | <Assign> | <Discard> | <ReturnStmt> | "break" | "continue"
-
 <Declare> ::= "let" <Name> ":" <Typ> "=" <Expr>
 <Assign> ::= <Name> "=" <Expr>
 <Discard> ::= <Expr>
 <ReturnStmt> ::= "return" <Expr>
 
 <Expr> ::= <BoolExpr> [<EqualOp> <BoolExpr>]
-<BoolExpr> ::= <P/MExpr> {<BoolOp> <P/MExpr>}
-<P/MExpr> ::= <M/DExpr> {<P/MOp> <M/DExpr>}
-<M/DExpr> ::= <ExpExpr> {<M/DOp> <ExpExpr>}
+<BoolExpr> ::= <AddSubExpr> {<BoolOp> <AddSubExpr>}
+<AddSubExpr> ::= <MultDivExpr> {<AddSubOp> <MultDivExpr>}
+<MultDivExpr> ::= <ExpExpr> {<MultDivOp> <ExpExpr>}
 <ExpExpr> ::= <UnaryExpr> {<ExpOp> <UnaryExpr>}
 <UnaryExpr> ::= {<UnaryOp>} <Atom>
 <Atom> ::= <Call> | <List> | <Dict> | <Const> | <Name> | "(" <Expr> ")"
@@ -30,8 +29,8 @@
 <Dict> ::= "{" [<Expr>":"<Expr> {"," <Expr>":"<Expr>}] "}"
 <EqualOp> ::= "==" | "!=" | ">" | "<" | ">=" | "<="
 <BoolOp> ::= "and" | "or"
-<P/MOp> ::= "+" | "-"
-<M/DOp> ::= "*" | "/"
+<AddSubOp> ::= "+" | "-"
+<MultDivOp> ::= "*" | "/"
 <ExpOp> ::= "^"
 <UnaryOp> ::= "-" | "+"
 

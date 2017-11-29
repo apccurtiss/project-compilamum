@@ -52,7 +52,7 @@ case class Discard(value: Expr) extends Stmt
 case class Return(value: Expr) extends Stmt
 case class If(condition: Expr, then: Stmt, orelse: Stmt) extends Stmt
 case class While(condition: Expr, body: Stmt) extends Stmt
-case class Stmts(body: List[Stmt]) extends Stmt
+case class Block(body: List[Stmt]) extends Stmt
 
 abstract class Global extends Node
 case class FuncExpr(loc: Location, typ: Typ, name: String, params: Map[String,Typ], body: Stmt) extends Global
