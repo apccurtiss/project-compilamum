@@ -4,7 +4,7 @@ import compilamum.ErrorMum
 import ast._
 
 object GenNetCall{
-  def apply(tree:Node): Either[ErrorMum,Node]={
+  def apply(tree:List[Global]): Either[ErrorMum,Node]={
     ???
   }
 }

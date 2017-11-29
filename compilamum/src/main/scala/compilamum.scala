@@ -9,7 +9,7 @@ import translate.{Translate,TranslateError}
 object Main {
   def main(args: Array[String]) = {
     val code = "\"Hello world\";"
-    Parseamum(code) flatmap GenNetCall flatmap FlattenNetCall flatmap GenFunc flatmap Translate match{
+    Parseamum(code) flatMap GenNetCall flatMap FlattenNetCall flatMap GenFunc flatMap Translate match{
       case ParseError(_,_,_) => ???
       case NetCallError() => ???
       case FlattenError() => ???

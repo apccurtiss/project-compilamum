@@ -2,17 +2,18 @@ package parser
 
 import scala.util.parsing.combinator.RegexParsers
 import scala.util.parsing.input.Positional
+import compilamum.ErrorMum
 
 import ast._
 
-case class ParseError(line: Int, column: Int, msg: String)
+case class ParseError(line: Int, column: Int, msg: String) extends ErrorMum
 
 object Parseamum extends RegexParsers {
   override def failure(msg: String) = "" ~> super.failure(msg)
   override def skipWhitespace = true
   override val whiteSpace = "[ \t\r\f]+".r
 
-  def apply(code: String): Either[ParseError, List[Global]] = {
+  def apply(code: String): Either[ErrorMum, List[Global]] = {
     parse(phrase(global), code) match {
       case NoSuccess(msg, next) => Left(ParseError(next.pos.line-1, next.pos.column-1, msg))
       case Success(result, next) => Right(result)
