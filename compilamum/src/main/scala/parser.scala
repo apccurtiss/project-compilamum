@@ -131,11 +131,12 @@ object Parseamum extends RegexParsers {
   //////////////
   // Literals //
   //////////////
+  
   def const: Parser[Expr] = bool | string | number
 
   def bool: Parser[Literal] = ("True" | "False") ^^ { b => ConstBool(b == "True") }
 
-  def string: Parser[Literal] = ("\"" ~> "[^\"]*".r <~ "\"") ^^ { s => ConstString(s) }
+  def string: Parser[Literal] = ("\"" ~> "(:?[^\"]|\\\")*".r <~ "\"") ^^ { s => ConstString(s) }
 
   def number: Parser[Literal] = "\\d+(:?\\.\\d*)?|\\.\\d+".r ^^ { n => ConstFloat(n.toDouble) }
 
@@ -145,7 +146,7 @@ object Parseamum extends RegexParsers {
 
   def args: Parser[List[Expr]] = ???
 
-  def params: Parser[Map[String,Typ]] = rep(name ~ ("," ~> typ)) ^^ {
+  def params: Parser[Map[String,Typ]] = rep(name ~ (":" ~> typ <~ ",")) ^^ {
     case p => Map[String,Typ](
       (
         p map {
