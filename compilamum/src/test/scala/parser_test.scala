@@ -33,8 +33,7 @@ class ParsingSpec extends FlatSpec with Matchers {
   
   it should "parse if statements" in {
     Parseamum.parseBlock("if (1) 1; else 2;") should be (Right(List(
-      If(ConstFloat(1.0),Discard(ConstFloat(1.0)),
-      Discard(ConstFloat(2.0)))
+      If(ConstFloat(1.0),Discard(ConstFloat(1.0)),Discard(ConstFloat(2.0)))
     )))
   }
   
