@@ -1,8 +1,14 @@
-import compilamum.ErrorMum
+package flatten
 
-def flattenNetCall()= {
-  
-  
+import compilamum.ErrorMum
+import ast._
+
+
+object FlattenNetCall{
+  def apply(tree:Node): Either[ErrorMum,Node]={
+    ???
+  }
 }
+
 
 case class FlattenError() extends ErrorMum

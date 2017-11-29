@@ -2,17 +2,18 @@ package parser
 
 import scala.util.parsing.combinator.RegexParsers
 import scala.util.parsing.input.Positional
+import compilamum.ErrorMum
 
 import ast._
 
-case class ParseError(line: Int, column: Int, msg: String)
+case class ParseError(line: Int, column: Int, msg: String) extends ErrorMum
 
 object Parseamum extends RegexParsers {
   override def failure(msg: String) = "" ~> super.failure(msg)
   override def skipWhitespace = true
   override val whiteSpace = "[ \t\r\f]+".r
 
-  def apply(code: String): Either[ParseError, List[Global]] = {
+  def apply(code: String): Either[ErrorMum, List[Global]] = {
     parse(phrase(global), code) match {
       case NoSuccess(msg, next) => Left(ParseError(next.pos.line-1, next.pos.column-1, msg))
       case Success(result, next) => Right(result)
@@ -31,13 +32,14 @@ object Parseamum extends RegexParsers {
   // GLOBAL //
   ////////////
 
-  def global: Parser[List[Global]] = rep(function | globalDecl | importStmt)
+  // def global: Parser[List[Global]] = rep(function | globalDecl | importStmt)
+  def global: Parser[List[Global]] = rep(function)
 
-  def globalDecl: Parser[Global] = failure("global delcarations are not implemented yet")
+  def globalDecl: Parser[Global] = ???
 
-  def importStmt: Parser[Global] = failure("imports are not implemented yet")
+  def importStmt: Parser[Global] = ???
 
-  def function: Parser[Global] = location ~ name ~ ("(" ~> params <~ ")") ~ ("->" ~> typ) ~ stmt ^^ {
+  def function: Parser[FuncExpr] = location ~ name ~ ("(" ~> params <~ ")") ~ ("->" ~> typ) ~ stmt ^^ {
     case l ~ Name(id) ~ p ~ t ~ b => FuncExpr(l, t, id, p, b)
   }
 
@@ -49,27 +51,27 @@ object Parseamum extends RegexParsers {
 
   def stmt: Parser[Stmt] = ifStmt | whileStmt | single <~ ";" | block | failure("Not a valid statement.")
 
-  def block: Parser[Stmt] = ("{" ~> rep(stmt) <~"}") ^^ { case ls => Block(ls) }
+  def block: Parser[Block] = ("{" ~> rep(stmt) <~"}") ^^ { case ls => Block(ls) }
 
-  def ifStmt: Parser[Stmt] = ("if" ~> "(" ~> expr <~ ")") ~ stmt ~ ("else" ~> stmt) ^^ {
-    case condition ~ then ~ orelse => If(condition, then, orelse)
+  def ifStmt: Parser[If] = ("if" ~> "(" ~> expr <~ ")") ~ stmt ~ ("else" ~> stmt) ^^ {
+    case condition ~ body ~ orelse => If(condition, body, orelse)
   }
 
-  def whileStmt: Parser[Stmt] =  ("while" ~> "(" ~> expr <~ ")") ~ stmt ^^ {
+  def whileStmt: Parser[While] =  ("while" ~> "(" ~> expr <~ ")") ~ stmt ^^ {
     case cond ~ body => While(cond, body)
   }
 
   def single: Parser[Stmt] = declare | assign | discard | returnStmt | "break" ^^^ Break() | "continue" ^^^ Continue()
 
-  def declare: Parser[Stmt] = ("let" ~> name) ~ (":" ~> typ) ~ ("=" ~> expr) ^^ {
+  def declare: Parser[Declare] = ("let" ~> name) ~ (":" ~> typ) ~ ("=" ~> expr) ^^ {
     case Name(id) ~ t ~ e => Declare(id, t, e)
   }
 
-  def assign: Parser[Stmt] = (name ~ ("=" ~> expr)) ^^ { case Name(id) ~ e => Assign(id, e) }
+  def assign: Parser[Assign] = (name ~ ("=" ~> expr)) ^^ { case Name(id) ~ e => Assign(id, e) }
 
-  def discard: Parser[Stmt] = expr ^^ Discard
+  def discard: Parser[Discard] = expr ^^ Discard
 
-  def returnStmt: Parser[Stmt] = ("return" ~> expr) ^^ Return
+  def returnStmt: Parser[Return] = ("return" ~> expr) ^^ Return
 
   /////////////////
   // EXPRESSIONS //
@@ -108,7 +110,7 @@ object Parseamum extends RegexParsers {
 
   def atom: Parser[Expr] = const | call | name | "(" ~> expr <~ ")" | failure("Unexpected end of line.")
 
-  def call: Parser[Expr] = name ~ ("("~> rep(expr <~ ",") <~")") ^^ {
+  def call: Parser[Expr] = name ~ ("("~> repsep(expr, ",") <~")") ^^ {
     case n ~ ls => Call(n, ls)
   }
 
@@ -134,11 +136,11 @@ object Parseamum extends RegexParsers {
 
   def const: Parser[Expr] = bool | string | number
 
-  def bool: Parser[Literal] = ("True" | "False") ^^ { b => ConstBool(b == "True") }
+  def bool: Parser[ConstBool] = ("True" | "False") ^^ { b => ConstBool(b == "True") }
 
-  def string: Parser[Literal] = ("\"" ~> "[^\"]*".r <~ "\"") ^^ { s => ConstString(s) }
+  def string: Parser[ConstString] = ("\"" ~> "[^\"]*".r <~ "\"") ^^ { s => ConstString(s) }
 
-  def number: Parser[Literal] = "\\d+(:?\\.\\d*)?|\\.\\d+".r ^^ { n => ConstFloat(n.toDouble) }
+  def number: Parser[ConstFloat] = "\\d+(:?\\.\\d*)?|\\.\\d+".r ^^ { n => ConstFloat(n.toDouble) }
 
   ///////////
   // Misc. //
@@ -146,7 +148,7 @@ object Parseamum extends RegexParsers {
 
   def args: Parser[List[Expr]] = ???
 
-  def params: Parser[Map[String,Typ]] = rep(name ~ (":" ~> typ <~ ",")) ^^ {
+  def params: Parser[Map[String,Typ]] = repsep(name ~ (":" ~> typ), ",") ^^ {
     case p => p map { case Name(id) ~ t => (id, t) } toMap
   }
 
@@ -154,7 +156,7 @@ object Parseamum extends RegexParsers {
                               | "function" | "return" | "frontend" | "backend"
                               | "let" )
 
-  def name: Parser[Literal] = not(keyword) ~> "[\\w_][\\w_\\d]*".r ^^ { x => Name(x) }
+  def name: Parser[Name] = not(keyword) ~> "[\\w_][\\w_\\d]*".r ^^ { x => Name(x) }
 
   def typ: Parser[Typ] = ( "String" ^^^ Str()
                            | "Number" ^^^ Num()

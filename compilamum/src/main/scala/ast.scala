@@ -50,7 +50,7 @@ case class Declare(to: String, typ: Typ, from: Expr) extends Stmt
 case class Assign(to: String, from: Expr) extends Stmt
 case class Discard(value: Expr) extends Stmt
 case class Return(value: Expr) extends Stmt
-case class If(condition: Expr, then: Stmt, orelse: Stmt) extends Stmt
+case class If(condition: Expr, body: Stmt, orelse: Stmt) extends Stmt
 case class While(condition: Expr, body: Stmt) extends Stmt
 case class Block(body: List[Stmt]) extends Stmt
 

@@ -59,4 +59,13 @@ class ParsingSpec extends FlatSpec with Matchers {
       Right(List(FuncExpr(Frontend(),Num(),"bottom",Map(),Block(List(Return(Call(Name("bottom"), List())))))))
     )
   }
+  
+  it should "parse parameters in functions correctly" in {
+    Parseamum("frontend bottom(i: Number, s: String) -> Number { return bottom(i, s); }") should be (
+      Right(List(FuncExpr(
+        Frontend(),Num(),"bottom",Map(("i", Num()), ("s", Str())),
+        Block(List(Return(Call(Name("bottom"), List(Name("i"), Name("s"))))))
+      )))
+    )
+  }
 }

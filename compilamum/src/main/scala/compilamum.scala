@@ -1,19 +1,16 @@
+package compilamum
+
 import parser.{Parseamum,ParseError}
-import netCall.{genNetCall, NetCallError}
-import flatten.{flattenNetCall,FlattenError}
-import generateFunctions.{genFunc,GenerateError}
-import translate.{translate,TranslateError}
+import netCall.{GenNetCall, NetCallError}
+import flatten.{FlattenNetCall,FlattenError}
+import generateFunctions.{GenFunc,GenerateError}
+import translate.{Translate,TranslateError}
 
 object Main {
   def main(args: Array[String]) = {
     val code = "\"Hello world\";"
-    Parseamum(code) flatmap genNetCall flatmap flattenNetCall flatmap genFunc flatmap translate match{
-      case ParseError(_,_,_) => ???
-      case NetCallError(_) => ???
-      case FlattenError(_) => ???
-      case GenerateError(_) => ???
-      case TranslateError(_) => ???
-      case x => ???
+    Parseamum(code) flatMap GenNetCall.apply flatMap FlattenNetCall.apply flatMap GenFunc.apply flatMap Translate.apply map {
+      case x => println(x)
     }
   }
 }
