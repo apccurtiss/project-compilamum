@@ -103,12 +103,17 @@ object Parseamum extends RegexParsers {
   // EXPRESSIONS //
   /////////////////
   
-  def atom: Parser[Expr] = const | name | "(" ~> expr <~ ")" | failure("Unexpected end of line.")
+  // Order of these matters! call must come before name, for example
+  def atom: Parser[Expr] = const | call | name | "(" ~> expr <~ ")" | failure("Unexpected end of line.")
 
   def const: Parser[Expr] = bool | string | number
   def bool: Parser[Literal] = ("True" | "False") ^^ { b => ConstBool(b == "True") }
   def string: Parser[Literal] = ("\"" ~> "[^\"]*".r <~ "\"") ^^ { s => ConstString(s) }
   def number: Parser[Literal] = "\\d+(:?\\.\\d*)?|\\.\\d+".r ^^ { n => ConstFloat(n.toDouble) }
+
+  def call: Parser[Expr] = name ~ ("("~> rep(expr <~ ",") <~")") ^^ {
+    case n ~ ls => Call(n, ls)
+  }
 
   def md: Parser[Expr] = atom ~ rep("*" ~ atom | "/" ~ atom) ^^ {
     case l ~ list => (l /: list) {

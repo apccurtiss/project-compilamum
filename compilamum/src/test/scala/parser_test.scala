@@ -54,4 +54,10 @@ class ParsingSpec extends FlatSpec with Matchers {
       Right(List(FuncExpr(Frontend(),Num(),"one",Map(),Stmts(List(Return(ConstFloat(1.0)))))))
     )
   }
+  
+  it should "parse function call" in {
+    Parseamum("frontend bottom() -> Number { return bottom(); }") should be (
+      Right(List(FuncExpr(Frontend(),Num(),"bottom",Map(),Stmts(List(Return(Call(Name("bottom"), List())))))))
+    )
+  }
 }
