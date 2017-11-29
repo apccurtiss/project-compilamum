@@ -7,11 +7,6 @@ import ast._
 
 case class ParseError(line: Int, column: Int, msg: String)
 
-// case class Literal(n: Float) extends AST
-// case class Ident(x: String) extends AST
-// case class BinOp(l: AST, op: String, r: AST) extends AST
-// case class While(cond: AST, body: List[AST]) extends AST
-
 object Parseamum extends RegexParsers {
   override def failure(msg: String) = "" ~> super.failure(msg)
   override def skipWhitespace = true
@@ -26,39 +21,37 @@ object Parseamum extends RegexParsers {
 
   def program: Parser[List[Node]] = phrase(rep(stmt)) | failure("Reached EOF")
 
-  // THESE ARE COMMENTED OUT BECAUSE THEY ARE CORRECT BUT DO NOT COMPILE
-  //def global: Parser[Global] = global_decl | import_stmt | function
-  //def global_decl: Parser[Global] = location ~ typ ~ name ~ "=" ~> expr <~ ";"
-  //def import_stmt: Parser[Global] = "import" ~> location ~ "as" ~> name ~ ("(" ~> params <~ ")") <~ ";"
+  def global: Parser[Node] = global_decl | import_stmt | function
+  def global_decl: Parser[Node] = (location ~ typ ~ name ~ "=" ~> expr) <~ ";"
+  def import_stmt: Parser[Node] = ("import" ~> location ~ "as" ~> name ~ ("(" ~> params <~ ")")) <~ ";" ^^ ???
+  def function: Parser[Node] = location ~ typ ~ name ~ ("(" ~> params <~ ")") ~ stmt ^^ ???
+  def location: Parser[Location] = ???
 
-  def atom: Parser[Expr] = const | name | "(" ~> expr <~ ")" | failure("Unexpected end of line.")
-
-  def const: Parser[Expr] = bool | string | number
-  def bool: Parser[Literal] = "(True)|(False)".r ^^ { b => ConstBool(b == "True") }
-  def string: Parser[Literal] = ("\"" ~> "[^\"]*".r <~ "\"") ^^ { s => ConstString(s) }
-  def number: Parser[Literal] = "\\d+(:?\\.\\d*)?|\\.\\d+".r ^^ { n => ConstFloat(n.toDouble) }
-
-  def name: Parser[Literal] = not("break" | "continue") ~> "[\\w_][\\w_\\d]*".r ^^ { x => Name(x) }
-
-  def mtype: Parser[MType] = ( "String" ^^^ Str()
-                           | "Number" ^^^ Num()
-                           | "List" ^^^ Ls()
-                           | "Dictionary" ^^^ Dict()
-                           | "Boolean" ^^^ Bool()
-                           | failure("Invalid type") )
-
-  def md: Parser[Expr] = atom ~ rep("*" ~ atom | "/" ~ atom) ^^ {
-    case l ~ list => (l /: list) {
-      case (ConstFloat(l), "*" ~ ConstFloat(r)) => ConstFloat(l * r)
-      case (ConstFloat(l), "/" ~ ConstFloat(r)) => ConstFloat(l / r)
-      case (acc, op ~ next) => op match {
-        case "*" => Bop(Times(), acc, next)
-        case "/" => Bop(Div(), acc, next)
-      }
-    }
+  def stmt: Parser[Node] = if_stmt | while_stmt | single <~ ";" | stmts
+  def stmts: Parser[Node] = ???
+  def if_stmt: Parser[Node] = ("if" ~> "(" ~> expr <~ ")") ~ stmt ~ ("else" ~> stmt) ^^ {
+    case condition ~ then ~ orelse => If(condition, then, orelse)
   }
+  def while_stmt: Parser[Node] =  ("while" ~> "(" ~> expr <~ ")") ~ stmt ^^ {
+    case cond ~ body => While(cond, body)
+  }
+  def single: Parser[Node] = ( declare
+    | assign
+    | discard
+    | return_stmt
+    | "break;".r ^^^ Break()
+    | "continue;".r ^^^ Continue() )
 
-  def as: Parser[Expr] = md ~ rep("+" ~ md | "-" ~ md) ^^ {
+  def declare: Parser[Node] = ("let" ~> name) ~ (":" ~> typ) ~ ("=" ~> expr <~ ";") ^^ {
+    case Name(id) ~ t ~ e => Declare(id, t, e)
+  }
+  def assign: Parser[Node] = (name ~ ("=" ~> expr <~ ";")) ^^ { case Name(id) ~ e => Assign(id, e) }
+  def discard: Parser[Node] = (expr <~ ";") ^^ Discard
+  def return_stmt: Parser[Node] = ("return" ~> expr <~ ";") ^^ Return
+
+  def expr: Parser[Node] = ??? //bool_expr [ equal_op ~ bool_expr ]
+  def bool_expr: Parser[Node] = ???
+  def p_m_expr: Parser[Node] = m_d_expr ~ rep("+" ~ md | "-" ~ md) ^^ {
     case l ~ list => (l /: list) {
       case (ConstFloat(l), "+" ~ ConstFloat(r)) => ConstFloat(l + r)
       case (ConstFloat(l), "-" ~ ConstFloat(r)) => ConstFloat(l - r)
@@ -68,27 +61,42 @@ object Parseamum extends RegexParsers {
       }
     }
   }
-  
-  def expr: Parser[Expr] = as
-  
-  def wloop: Parser[Stmt] =  ("while" ~> "(" ~> expr <~ ")") ~ stmt ^^ {
-    case cond ~ body => While(cond, body)
+  def m_d_expr: Parser[Node] = atom ~ rep("*" ~ atom | "/" ~ atom) ^^ {
+    case l ~ list => (l /: list) {
+      case (ConstFloat(l), "*" ~ ConstFloat(r)) => ConstFloat(l * r)
+      case (ConstFloat(l), "/" ~ ConstFloat(r)) => ConstFloat(l / r)
+      case (acc, op ~ next) => op match {
+        case "*" => Bop(Times(), acc, next)
+        case "/" => Bop(Div(), acc, next)
+      }
+    }
   }
-  
-  def discard: Parser[Stmt] = (expr <~ ";") ^^ Discard
-  
-  def ifstmt: Parser[Stmt] = ("if" ~> "(" ~> expr <~ ")") ~ stmt ~ ("else" ~> stmt) ^^ {
-    case condition ~ then ~ orelse => If(condition, then, orelse)
-  }
-  
-  def break: Parser[Stmt] = "break;".r ^^^ Break()
-  def continue: Parser[Stmt] = "continue;".r ^^^ Continue()
-  def ret: Parser[Stmt] = ("return" ~> expr <~ ";") ^^ Return
-  
-  def assign: Parser[Stmt] = (name ~ ("=" ~> expr <~ ";")) ^^ { case Name(id) ~ e => Assign(id, e) }
-  def declare: Parser[Stmt] = ("let" ~> name) ~ (":" ~> mtype) ~ ("=" ~> expr <~ ";") ^^ {
-    case Name(id) ~ t ~ e => Declare(id, t, e)
-  }
-  
-  def stmt: Parser[Stmt] = assign | discard | wloop | ifstmt | break | continue | declare | ret
+  def exp_expr: Parser[Node] = ???
+  def unary_expr: Parser[Node] = ???
+  def atom: Parser[Node] = const | name | "(" ~> expr <~ ")" | failure("Unexpected end of line.")
+  def call: Parser[Node] = ???
+  def list: Parser[Node] = ???
+  def dict: Parser[Node] = ???
+  def equal_op: Parser[Op] = ???
+  def bool_op: Parser[Op] = ???
+  def p_m_op: Parser[Op] = ???
+  def m_d_op: Parser[Op] = ???
+  def exp_op: Parser[Op] = ???
+  def unary_op: Parser[Op] = ???
+
+  def const: Parser[Node] = bool | string | number
+  def bool: Parser[Node] = "(True)|(False)".r ^^ { b => ConstBool(b == "True") }
+  def string: Parser[Node] = ("\"" ~> "[^\"]*".r <~ "\"") ^^ { s => ConstString(s) }
+  def number: Parser[Node] = "\\d+(:?\\.\\d*)?|\\.\\d+".r ^^ { n => ConstFloat(n.toDouble) }
+
+  def args: Parser[Node] = ???
+  def params: Parser[Node] = ???
+  def name: Parser[Node] = not("break" | "continue") ~> "[\\w_][\\w_\\d]*".r ^^ { x => Name(x) }
+  def typ: Parser[Typ] = ( "String" ^^^ Str()
+    | "Number" ^^^ Num()
+    | "List" ^^^ Ls()
+    | "Dictionary" ^^^ Dict()
+    | "Boolean" ^^^ Bool()
+    | failure("Invalid type") )
+
 }

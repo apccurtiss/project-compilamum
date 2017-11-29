@@ -7,12 +7,12 @@ abstract class Location extends Node
 case class Backend() extends Location
 case class Frontend() extends Location
 
-abstract class MType extends Node
-case class Str() extends MType
-case class Num() extends MType
-case class Bool() extends MType
-case class Ls() extends MType
-case class Dict() extends MType
+abstract class Typ extends Node
+case class Str() extends Typ
+case class Num() extends Typ
+case class Bool() extends Typ
+case class Ls() extends Typ
+case class Dict() extends Typ
 
 // deal with the distinction of things not being unary ops at compile time, not parse time
 abstract class Op extends Node
@@ -46,7 +46,7 @@ case class ConstBool(value: Boolean) extends Literal
 abstract class Stmt extends Node
 case class Break() extends Stmt
 case class Continue() extends Stmt
-case class Declare(to: String, mtype: MType, from: Expr) extends Stmt
+case class Declare(to: String, typ: Typ, from: Expr) extends Stmt
 case class Assign(to: String, from: Expr) extends Stmt
 case class Discard(value: Expr) extends Stmt
 case class Return(value: Expr) extends Stmt
@@ -55,9 +55,9 @@ case class While(condition: Expr, body: Stmt) extends Stmt
 case class Stmts(body: List[Stmt]) extends Stmt
 
 abstract class Global extends Node
-case class FuncExpr(loc: Location, mtype: MType, name: String, params: Map[String,MType], body: Stmt) extends Global
-case class GlobalDecl(loc: Location, to: String, mtype: MType, from: Expr) extends Global
-case class Import(loc: Location, jsCode: String, name:String, params: Map[String,MType]) extends Global
+case class FuncExpr(loc: Location, typ: Typ, name: String, params: Map[String,Typ], body: Stmt) extends Global
+case class GlobalDecl(loc: Location, to: String, typ: Typ, from: Expr) extends Global
+case class Import(loc: Location, jsCode: String, name:String, params: Map[String,Typ]) extends Global
 
 // and there's the program over all:
 case class Program(body: List[Global]) extends Node
