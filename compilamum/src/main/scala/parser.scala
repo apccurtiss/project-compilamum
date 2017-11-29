@@ -7,45 +7,108 @@ import ast._
 
 case class ParseError(line: Int, column: Int, msg: String)
 
-// case class Literal(n: Float) extends AST
-// case class Ident(x: String) extends AST
-// case class BinOp(l: AST, op: String, r: AST) extends AST
-// case class While(cond: AST, body: List[AST]) extends AST
-
 object Parseamum extends RegexParsers {
   override def failure(msg: String) = "" ~> super.failure(msg)
   override def skipWhitespace = true
   override val whiteSpace = "[ \t\r\f]+".r
 
-  def apply(code: String): Either[ParseError, List[Node]] = {
-    parse(program, code) match {
+  def apply(code: String): Either[ParseError, List[Global]] = {
+    parse(phrase(global), code) match {
       case NoSuccess(msg, next) => Left(ParseError(next.pos.line-1, next.pos.column-1, msg))
       case Success(result, next) => Right(result)
     }
   }
 
-  def program: Parser[List[Node]] = phrase(rep(stmt)) | failure("Reached EOF")
-
-  // THESE ARE COMMENTED OUT BECAUSE THEY ARE CORRECT BUT DO NOT COMPILE
-  //def global: Parser[Global] = global_decl | import_stmt | function
-  //def global_decl: Parser[Global] = location ~ typ ~ name ~ "=" ~> expr <~ ";"
-  //def import_stmt: Parser[Global] = "import" ~> location ~ "as" ~> name ~ ("(" ~> params <~ ")") <~ ";"
-
-  def atom: Parser[Expr] = const | name | "(" ~> expr <~ ")" | failure("Unexpected end of line.")
-
-  def const: Parser[Expr] = bool | string | number
-  def bool: Parser[Literal] = "(True)|(False)".r ^^ { b => ConstBool(b == "True") }
-  def string: Parser[Literal] = ("\"" ~> "[^\"]*".r <~ "\"") ^^ { s => ConstString(s) }
-  def number: Parser[Literal] = "\\d+(:?\\.\\d*)?|\\.\\d+".r ^^ { n => ConstFloat(n.toDouble) }
-
-  def name: Parser[Literal] = not("break" | "continue") ~> "[\\w_][\\w_\\d]*".r ^^ { x => Name(x) }
-
+  // For testing
+  def parseBlock(code: String): Either[ParseError, List[Stmt]] = {
+    parse(phrase(block), code) match {
+      case NoSuccess(msg, next) => Left(ParseError(next.pos.line-1, next.pos.column-1, msg))
+      case Success(result, next) => Right(result)
+    }
+  }
+  
+  /////////////
+  // GENERAL //
+  /////////////
+  
+  
+  def keyword: Parser[String] = ( "if" | "else" | "while" | "break" | "continue"
+                              | "function" | "return" | "frontend" | "backend"
+                              | "let" )
+  def name: Parser[Literal] = not(keyword) ~> "[\\w_][\\w_\\d]*".r ^^ { x => Name(x) }
+  
   def mtype: Parser[MType] = ( "String" ^^^ Str()
                            | "Number" ^^^ Num()
                            | "List" ^^^ Ls()
                            | "Dictionary" ^^^ Dict()
                            | "Boolean" ^^^ Bool()
                            | failure("Invalid type") )
+
+  ////////////
+  // GLOBAL //
+  ////////////
+
+  def global: Parser[List[Global]] = rep(function | gdecl | jmport)
+
+  def location: Parser[Location] = ("frontend" ^^^ Frontend()) | ("backend" ^^^ Backend())
+
+  def params: Parser[Map[String,MType]] = rep(name ~ ("," ~> mtype)) ^^ {
+    case p => Map[String,MType](
+      (
+        p map {
+          case Name(id) ~ t => (id, t)
+        }
+      ):_*
+    )
+  }
+
+  def function: Parser[Global] = location ~ name ~ ("(" ~> params <~ ")") ~ ("->" ~> mtype) ~ stmt ^^ {
+    case l ~ Name(id) ~ p ~ t ~ b => FuncExpr(l, t, id, p, b)
+  }
+  
+  def gdecl: Parser[Global] = failure("global delcarations are not implemented yet")
+
+  def jmport: Parser[Global] = failure("imports are not implemented yet")
+
+  ////////////////
+  // STATEMENTS //
+  ////////////////
+
+  def block: Parser[List[Stmt]] = rep(stmt)
+  
+  def wloop: Parser[Stmt] =  ("while" ~> "(" ~> expr <~ ")") ~ stmt ^^ {
+    case cond ~ body => While(cond, body)
+  }
+  
+  def discard: Parser[Stmt] = (expr <~ ";") ^^ Discard
+  
+  def ifstmt: Parser[Stmt] = ("if" ~> "(" ~> expr <~ ")") ~ stmt ~ ("else" ~> stmt) ^^ {
+    case condition ~ then ~ orelse => If(condition, then, orelse)
+  }
+  
+  def break: Parser[Stmt] = "break" ~ ";" ^^^ Break()
+  def continue: Parser[Stmt] = "continue" ~ ";" ^^^ Continue()
+  def ret: Parser[Stmt] = ("return" ~> expr <~ ";") ^^ Return
+  
+  def assign: Parser[Stmt] = (name ~ ("=" ~> expr <~ ";")) ^^ { case Name(id) ~ e => Assign(id, e) }
+  def declare: Parser[Stmt] = ("let" ~> name) ~ (":" ~> mtype) ~ ("=" ~> expr <~ ";") ^^ {
+    case Name(id) ~ t ~ e => Declare(id, t, e)
+  }
+  
+  def stmts: Parser[Stmt] = ("{" ~> rep(stmt) <~"}") ^^ { case ls => Stmts(ls) }
+  
+  def stmt: Parser[Stmt] = assign | discard | wloop | ifstmt | break | continue | declare | ret | stmts | failure("Not a valid statement.")
+  
+  /////////////////
+  // EXPRESSIONS //
+  /////////////////
+  
+  def atom: Parser[Expr] = const | name | "(" ~> expr <~ ")" | failure("Unexpected end of line.")
+
+  def const: Parser[Expr] = bool | string | number
+  def bool: Parser[Literal] = ("True" | "False") ^^ { b => ConstBool(b == "True") }
+  def string: Parser[Literal] = ("\"" ~> "[^\"]*".r <~ "\"") ^^ { s => ConstString(s) }
+  def number: Parser[Literal] = "\\d+(:?\\.\\d*)?|\\.\\d+".r ^^ { n => ConstFloat(n.toDouble) }
 
   def md: Parser[Expr] = atom ~ rep("*" ~ atom | "/" ~ atom) ^^ {
     case l ~ list => (l /: list) {
@@ -70,25 +133,4 @@ object Parseamum extends RegexParsers {
   }
   
   def expr: Parser[Expr] = as
-  
-  def wloop: Parser[Stmt] =  ("while" ~> "(" ~> expr <~ ")") ~ stmt ^^ {
-    case cond ~ body => While(cond, body)
-  }
-  
-  def discard: Parser[Stmt] = (expr <~ ";") ^^ Discard
-  
-  def ifstmt: Parser[Stmt] = ("if" ~> "(" ~> expr <~ ")") ~ stmt ~ ("else" ~> stmt) ^^ {
-    case condition ~ then ~ orelse => If(condition, then, orelse)
-  }
-  
-  def break: Parser[Stmt] = "break;".r ^^^ Break()
-  def continue: Parser[Stmt] = "continue;".r ^^^ Continue()
-  def ret: Parser[Stmt] = ("return" ~> expr <~ ";") ^^ Return
-  
-  def assign: Parser[Stmt] = (name ~ ("=" ~> expr <~ ";")) ^^ { case Name(id) ~ e => Assign(id, e) }
-  def declare: Parser[Stmt] = ("let" ~> name) ~ (":" ~> mtype) ~ ("=" ~> expr <~ ";") ^^ {
-    case Name(id) ~ t ~ e => Declare(id, t, e)
-  }
-  
-  def stmt: Parser[Stmt] = assign | discard | wloop | ifstmt | break | continue | declare | ret
 }
