@@ -9,13 +9,8 @@ import translate.{Translate,TranslateError}
 object Main {
   def main(args: Array[String]) = {
     val code = "\"Hello world\";"
-    Parseamum(code) flatMap GenNetCall flatMap FlattenNetCall flatMap GenFunc flatMap Translate match{
-      case ParseError(_,_,_) => ???
-      case NetCallError() => ???
-      case FlattenError() => ???
-      case GenerateError() => ???
-      case TranslateError() => ???
-      case x => ???
+    Parseamum(code) flatMap GenNetCall.apply flatMap FlattenNetCall.apply flatMap GenFunc.apply flatMap Translate.apply map {
+      case x => println(x)
     }
   }
 }

@@ -109,7 +109,7 @@ object Parseamum extends RegexParsers {
 
   def atom: Parser[Expr] = const | call | name | "(" ~> expr <~ ")" | failure("Unexpected end of line.")
 
-  def call: Parser[Expr] = name ~ ("("~> rep(expr <~ ",") <~")") ^^ {
+  def call: Parser[Expr] = name ~ ("("~> repsep(expr, ",") <~")") ^^ {
     case n ~ ls => Call(n, ls)
   }
 
@@ -147,7 +147,7 @@ object Parseamum extends RegexParsers {
 
   def args: Parser[List[Expr]] = ???
 
-  def params: Parser[Map[String,Typ]] = rep(name ~ (":" ~> typ <~ ",")) ^^ {
+  def params: Parser[Map[String,Typ]] = repsep(name ~ (":" ~> typ), ",") ^^ {
     case p => Map[String,Typ](
       (
         p map {
