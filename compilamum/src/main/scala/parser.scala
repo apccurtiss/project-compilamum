@@ -21,101 +21,66 @@ object Parseamum extends RegexParsers {
 
   // For testing
   def parseBlock(code: String): Either[ParseError, List[Stmt]] = {
-    parse(phrase(block), code) match {
+    parse(phrase(rep(stmt)), code) match {
       case NoSuccess(msg, next) => Left(ParseError(next.pos.line-1, next.pos.column-1, msg))
       case Success(result, next) => Right(result)
     }
   }
-  
-  /////////////
-  // GENERAL //
-  /////////////
-  
-  
-  def keyword: Parser[String] = ( "if" | "else" | "while" | "break" | "continue"
-                              | "function" | "return" | "frontend" | "backend"
-                              | "let" )
-  def name: Parser[Literal] = not(keyword) ~> "[\\w_][\\w_\\d]*".r ^^ { x => Name(x) }
-  
-  def mtype: Parser[MType] = ( "String" ^^^ Str()
-                           | "Number" ^^^ Num()
-                           | "List" ^^^ Ls()
-                           | "Dictionary" ^^^ Dict()
-                           | "Boolean" ^^^ Bool()
-                           | failure("Invalid type") )
 
   ////////////
   // GLOBAL //
   ////////////
 
-  def global: Parser[List[Global]] = rep(function | gdecl | jmport)
+  def global: Parser[List[Global]] = rep(function | globalDecl | importStmt)
 
-  def location: Parser[Location] = ("frontend" ^^^ Frontend()) | ("backend" ^^^ Backend())
+  def globalDecl: Parser[Global] = failure("global delcarations are not implemented yet")
 
-  def params: Parser[Map[String,MType]] = rep(name ~ ("," ~> mtype)) ^^ {
-    case p => Map[String,MType](
-      (
-        p map {
-          case Name(id) ~ t => (id, t)
-        }
-      ):_*
-    )
-  }
+  def importStmt: Parser[Global] = failure("imports are not implemented yet")
 
-  def function: Parser[Global] = location ~ name ~ ("(" ~> params <~ ")") ~ ("->" ~> mtype) ~ stmt ^^ {
+  def function: Parser[Global] = location ~ name ~ ("(" ~> params <~ ")") ~ ("->" ~> typ) ~ stmt ^^ {
     case l ~ Name(id) ~ p ~ t ~ b => FuncExpr(l, t, id, p, b)
   }
-  
-  def gdecl: Parser[Global] = failure("global delcarations are not implemented yet")
 
-  def jmport: Parser[Global] = failure("imports are not implemented yet")
+  def location: Parser[Location] = ("frontend" ^^^ Frontend()) | ("backend" ^^^ Backend())
 
   ////////////////
   // STATEMENTS //
   ////////////////
 
-  def block: Parser[List[Stmt]] = rep(stmt)
-  
-  def wloop: Parser[Stmt] =  ("while" ~> "(" ~> expr <~ ")") ~ stmt ^^ {
-    case cond ~ body => While(cond, body)
-  }
-  
-  def discard: Parser[Stmt] = (expr <~ ";") ^^ Discard
-  
-  def ifstmt: Parser[Stmt] = ("if" ~> "(" ~> expr <~ ")") ~ stmt ~ ("else" ~> stmt) ^^ {
+  def stmt: Parser[Stmt] = ifStmt | whileStmt | single <~ ";" | block | failure("Not a valid statement.")
+
+  def block: Parser[Stmt] = ("{" ~> rep(stmt) <~"}") ^^ { case ls => Block(ls) }
+
+  def ifStmt: Parser[Stmt] = ("if" ~> "(" ~> expr <~ ")") ~ stmt ~ ("else" ~> stmt) ^^ {
     case condition ~ then ~ orelse => If(condition, then, orelse)
   }
-  
-  def break: Parser[Stmt] = "break" ~ ";" ^^^ Break()
-  def continue: Parser[Stmt] = "continue" ~ ";" ^^^ Continue()
-  def ret: Parser[Stmt] = ("return" ~> expr <~ ";") ^^ Return
-  
-  def assign: Parser[Stmt] = (name ~ ("=" ~> expr <~ ";")) ^^ { case Name(id) ~ e => Assign(id, e) }
-  def declare: Parser[Stmt] = ("let" ~> name) ~ (":" ~> mtype) ~ ("=" ~> expr <~ ";") ^^ {
+
+  def whileStmt: Parser[Stmt] =  ("while" ~> "(" ~> expr <~ ")") ~ stmt ^^ {
+    case cond ~ body => While(cond, body)
+  }
+
+  def single: Parser[Stmt] = declare | assign | discard | returnStmt | "break" ^^^ Break() | "continue" ^^^ Continue()
+
+  def declare: Parser[Stmt] = ("let" ~> name) ~ (":" ~> typ) ~ ("=" ~> expr) ^^ {
     case Name(id) ~ t ~ e => Declare(id, t, e)
   }
-  
-  def stmts: Parser[Stmt] = ("{" ~> rep(stmt) <~"}") ^^ { case ls => Stmts(ls) }
-  
-  def stmt: Parser[Stmt] = assign | discard | wloop | ifstmt | break | continue | declare | ret | stmts | failure("Not a valid statement.")
-  
+
+  def assign: Parser[Stmt] = (name ~ ("=" ~> expr)) ^^ { case Name(id) ~ e => Assign(id, e) }
+
+  def discard: Parser[Stmt] = expr ^^ Discard
+
+  def returnStmt: Parser[Stmt] = ("return" ~> expr) ^^ Return
+
   /////////////////
   // EXPRESSIONS //
   /////////////////
-  
+
   // Order of these matters! call must come before name, for example
-  def atom: Parser[Expr] = const | call | name | "(" ~> expr <~ ")" | failure("Unexpected end of line.")
+  def expr: Parser[Expr] = addSubExpr
 
-  def const: Parser[Expr] = bool | string | number
-  def bool: Parser[Literal] = ("True" | "False") ^^ { b => ConstBool(b == "True") }
-  def string: Parser[Literal] = ("\"" ~> "[^\"]*".r <~ "\"") ^^ { s => ConstString(s) }
-  def number: Parser[Literal] = "\\d+(:?\\.\\d*)?|\\.\\d+".r ^^ { n => ConstFloat(n.toDouble) }
+  def boolExpr: Parser[Expr] = ???
 
-  def call: Parser[Expr] = name ~ ("("~> rep(expr <~ ",") <~")") ^^ {
-    case n ~ ls => Call(n, ls)
-  }
-
-  def md: Parser[Expr] = atom ~ rep("*" ~ atom | "/" ~ atom) ^^ {
+  def multDivExpr: Parser[Expr] = atom ~ rep("*" ~ atom | "/" ~ atom) ^^ {
     case l ~ list => (l /: list) {
       case (ConstFloat(l), "*" ~ ConstFloat(r)) => ConstFloat(l * r)
       case (ConstFloat(l), "/" ~ ConstFloat(r)) => ConstFloat(l / r)
@@ -126,7 +91,7 @@ object Parseamum extends RegexParsers {
     }
   }
 
-  def as: Parser[Expr] = md ~ rep("+" ~ md | "-" ~ md) ^^ {
+  def addSubExpr: Parser[Expr] = multDivExpr ~ rep("+" ~ multDivExpr | "-" ~ multDivExpr) ^^ {
     case l ~ list => (l /: list) {
       case (ConstFloat(l), "+" ~ ConstFloat(r)) => ConstFloat(l + r)
       case (ConstFloat(l), "-" ~ ConstFloat(r)) => ConstFloat(l - r)
@@ -136,6 +101,73 @@ object Parseamum extends RegexParsers {
       }
     }
   }
+
+  def expExpr: Parser[Expr] = ???
+
+  def unaryExpr: Parser[Expr] = ???
+
+  def atom: Parser[Expr] = const | call | name | "(" ~> expr <~ ")" | failure("Unexpected end of line.")
+
+  def call: Parser[Expr] = name ~ ("("~> rep(expr <~ ",") <~")") ^^ {
+    case n ~ ls => Call(n, ls)
+  }
+
+  def list: Parser[Expr] = ???
+
+  def dict: Parser[Expr] = ???
+
+  def equalOp: Parser[Expr] = ???
+
+  def boolOp: Parser[Expr] = ???
+
+  def addSubOp: Parser[Expr] = ???
+
+  def multDivOp: Parser[Expr] = ???
+
+  def expOp: Parser[Expr] = ???
+
+  def unaryOp: Parser[Expr] = ???
+
+  //////////////
+  // Literals //
+  //////////////
   
-  def expr: Parser[Expr] = as
+  def const: Parser[Expr] = bool | string | number
+
+  def bool: Parser[Literal] = ("True" | "False") ^^ { b => ConstBool(b == "True") }
+
+  def string: Parser[Literal] = ("\"" ~> "(:?[^\"]|\\\")*".r <~ "\"") ^^ { s => ConstString(s) }
+
+  def number: Parser[Literal] = "\\d+(:?\\.\\d*)?|\\.\\d+".r ^^ { n => ConstFloat(n.toDouble) }
+
+  ///////////
+  // Misc. //
+  ///////////
+
+  def args: Parser[List[Expr]] = ???
+
+  def params: Parser[Map[String,Typ]] = rep(name ~ (":" ~> typ <~ ",")) ^^ {
+    case p => Map[String,Typ](
+      (
+        p map {
+          case Name(id) ~ t => (id, t)
+        }
+      ):_*
+    )
+  }
+
+  def keyword: Parser[String] = ( "if" | "else" | "while" | "break" | "continue"
+                              | "function" | "return" | "frontend" | "backend"
+                              | "let" )
+
+  def name: Parser[Literal] = not(keyword) ~> "[\\w_][\\w_\\d]*".r ^^ { x => Name(x) }
+
+  def typ: Parser[Typ] = ( "String" ^^^ Str()
+                           | "Number" ^^^ Num()
+                           | "List" ^^^ Ls()
+                           | "Dictionary" ^^^ Dict()
+                           | "Boolean" ^^^ Bool()
+                           | failure("Invalid type") )
+
+  def javascript: Parser[Expr] = ???
 }

@@ -1,36 +1,36 @@
 <Start> ::= <Program>
 <Program> ::= { <Global> }
 
-<Global> ::= <GlobalDecl> | <Import> | <Function>
-<GlobalDecl> ::= <Location> <Type> <Name> "=" <Const> ";"
-<Import> ::= "import" <Location> <Javascript> "as" <Name> "(" <Params> ")" ";"
-<Function> ::= <Location> <Type> <Name> "(" <Params> ")" <Statement>
+<Global> ::= <GlobalDecl> | <ImportStmt> | <Function>
+<GlobalDecl> ::= <Location> <Typ> <Name> "=" <Const> ";"
+<ImportStmt> ::= "import" <Location> <Javascript> "as" <Name> "(" <Params> ")" ";"
+<Function> ::= <Location> <Typ> <Name> "(" <Params> ")" <Stmt>
+<Locaiton> ::= "front" | "back"
 
-<Statement> ::= <If> | <While> | <Single> ";" | <Statements>
-<Statements> ::= "{" { <Statement> } "}"
-<If> ::= "if" "(" <Expr> ")" <Statement> ["else"  <Statement> ]
-<While> ::= "while" "(" <Expr> ")" <Statement>
-<Single> ::= <Declaration> | <Assignment> | <Discard> | <Return> | "break" | "continue"
-
-<Declaration> ::= <Type> <Name> "=" <Expr>
-<Assignment> ::= <Name> "=" <Expr>
+<Stmt> ::= <IfStmt> | <WhileStmt> | <Single> ";" | <Block>
+<Block> ::= "{" { <Stmt> } "}"
+<IfStmt> ::= "if" "(" <Expr> ")" <Stmt> ["else"  <Stmt> ]
+<WhileStmt> ::= "while" "(" <Expr> ")" <Stmt>
+<Single> ::= <Declare> | <Assign> | <Discard> | <ReturnStmt> | "break" | "continue"
+<Declare> ::= "let" <Name> ":" <Typ> "=" <Expr>
+<Assign> ::= <Name> "=" <Expr>
 <Discard> ::= <Expr>
-<Return> ::= "return" <Expr>
+<ReturnStmt> ::= "return" <Expr>
 
 <Expr> ::= <BoolExpr> [<EqualOp> <BoolExpr>]
-<BoolExpr> ::= <P/MExpr> {<BoolOp> <P/MExpr>}
-<P/MExpr> ::= <M/DExpr> {<P/MOp> <M/DExpr>}
-<M/DExpr> ::= <ExpExpr> {<M/DOp> <ExpExpr>}
+<BoolExpr> ::= <AddSubExpr> {<BoolOp> <AddSubExpr>}
+<AddSubExpr> ::= <MultDivExpr> {<AddSubOp> <MultDivExpr>}
+<MultDivExpr> ::= <ExpExpr> {<MultDivOp> <ExpExpr>}
 <ExpExpr> ::= <UnaryExpr> {<ExpOp> <UnaryExpr>}
 <UnaryExpr> ::= {<UnaryOp>} <Atom>
-<Atom> ::= <Call> | <List> | <Dictionary> | <Const> | <Name> | "(" <Expr> ")"
+<Atom> ::= <Call> | <List> | <Dict> | <Const> | <Name> | "(" <Expr> ")"
 <Call> ::= <Name> "(" <Args> ")"
 <List> ::= "[" [<Expr> {"," <Expr>}] "]"
-<Dictionary> ::= "{" [<Expr>":"<Expr> {"," <Expr>":"<Expr>}] "}"
+<Dict> ::= "{" [<Expr>":"<Expr> {"," <Expr>":"<Expr>}] "}"
 <EqualOp> ::= "==" | "!=" | ">" | "<" | ">=" | "<="
 <BoolOp> ::= "and" | "or"
-<P/MOp> ::= "+" | "-"
-<M/DOp> ::= "*" | "/"
+<AddSubOp> ::= "+" | "-"
+<MultDivOp> ::= "*" | "/"
 <ExpOp> ::= "^"
 <UnaryOp> ::= "-" | "+"
 
@@ -40,8 +40,8 @@
 <Number> ::= regex("\d+(:?\.\d*)?|\.\d+")
 
 <Args> ::= [<Expr> {"," <Expr>}]
-<Params> ::= [<Type> <Name> {"," <Type> <Name>}]
+<Params> ::= [<Typ> <Name> {"," <Typ> <Name>}]
 <Name> ::= regex("[\w_][\w_\d]*")
-<Type> ::= "string" | "num" | "list" | "struct" | "void"
+<Typ> ::= "string" | "num" | "list" | "struct" | "void"
 
 <JavaScript> ::= <String>
