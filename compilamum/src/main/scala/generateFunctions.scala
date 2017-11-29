@@ -5,7 +5,7 @@ import ast._
 
 object GenFunc{
   def apply(tree:Node): Either[ErrorMum,Node]={
-    ???
+    Right(tree)
   }
 }
 

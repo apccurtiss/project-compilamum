@@ -5,7 +5,7 @@ import ast._
 
 object Translate{
   def apply(tree:Node): Either[ErrorMum,Node]={
-    ???
+    Right(tree)
   }
 }
 

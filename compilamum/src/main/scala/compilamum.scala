@@ -7,9 +7,10 @@ import generateFunctions.{GenFunc,GenerateError}
 import translate.{Translate,TranslateError}
 
 object Main {
-  def main(args: Array[String]) = {
-    val code = "\"Hello world\";"
-    Parseamum(code) flatMap GenNetCall.apply flatMap FlattenNetCall.apply flatMap GenFunc.apply flatMap Translate.apply map {
+  def main(args: Array[String]): Unit = {
+    val source = scala.io.Source.fromFile(args(0))
+    val code = try source.mkString finally source.close()
+    Parseamum(code) flatMap GenNetCall.apply flatMap FlattenNetCall.apply flatMap GenFunc.apply flatMap Translate.apply match {
       case x => println(x)
     }
   }

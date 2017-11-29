@@ -13,7 +13,7 @@ object Parseamum extends RegexParsers {
   override def skipWhitespace = true
   override val whiteSpace = "[ \t\r\f]+".r
 
-  def apply(code: String): Either[ErrorMum, List[Global]] = {
+  def apply(code: String): Either[ErrorMum, Program] = {
     parse(phrase(global), code) match {
       case NoSuccess(msg, next) => Left(ParseError(next.pos.line-1, next.pos.column-1, msg))
       case Success(result, next) => Right(result)
@@ -32,8 +32,7 @@ object Parseamum extends RegexParsers {
   // GLOBAL //
   ////////////
 
-  // def global: Parser[List[Global]] = rep(function | globalDecl | importStmt)
-  def global: Parser[List[Global]] = rep(function)
+  def global: Parser[Program] = rep(function) ^^ Program
 
   def globalDecl: Parser[Global] = ???
 
