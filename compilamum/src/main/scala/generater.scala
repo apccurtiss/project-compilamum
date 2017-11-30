@@ -17,7 +17,7 @@ object Generate {
     case Program(lines) => lines map gen mkString("\n")
 
     case GlobalDecl(_, name, _, value) => s"var $name = ${gen(value)};"
-    case FuncExpr(_, _, name, params, body) => {
+    case FuncDecl(_, _, name, params, body) => {
       s"function $name(${params map(_._1) mkString(", ")}) {\n${gen(body)}\n}"
     }
 

@@ -55,7 +55,7 @@ case class While(condition: Expr, body: Stmt) extends Stmt
 case class Block(body: List[Stmt]) extends Stmt
 
 abstract class Global extends Node
-case class FuncExpr(loc: Location, typ: Typ, name: String, params: Map[String,Typ], body: Stmt) extends Global
+case class FuncDecl(loc: Location, typ: Typ, name: String, params: Map[String,Typ], body: Stmt) extends Global
 case class GlobalDecl(loc: Location, to: String, typ: Typ, from: Expr) extends Global
 case class Import(loc: Location, jsCode: String, name: String, params: Map[String,Typ]) extends Global
 
