@@ -1,0 +1,7 @@
+frontend x: Number = 1 + 2;
+frontend y: Number = x + 2;
+
+frontend foo(a: Number, b: Number): Void {
+  x + y + a + b;
+  7 - 8;
+}

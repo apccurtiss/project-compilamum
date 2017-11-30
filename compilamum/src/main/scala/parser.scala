@@ -11,7 +11,7 @@ case class ParseError(line: Int, column: Int, msg: String) extends ErrorMum
 object Parse extends RegexParsers {
   override def failure(msg: String) = "" ~> super.failure(msg)
   override def skipWhitespace = true
-  override val whiteSpace = "[ \t\r\f]+".r
+  override val whiteSpace = "[ \t\n\r\f]+".r
 
   def apply(code: String): Either[ErrorMum, Program] = {
     parse(phrase(global), code) match {
@@ -32,13 +32,15 @@ object Parse extends RegexParsers {
   // GLOBAL //
   ////////////
 
-  def global: Parser[Program] = rep(function) ^^ Program
+  def global: Parser[Program] = rep(function | globalDecl) ^^ Program
 
-  def globalDecl: Parser[Global] = ???
+  def globalDecl: Parser[GlobalDecl] = location ~ name ~ (":" ~> typ) ~ ("=" ~> expr <~ semi) ^^ {
+    case loc ~ Name(x) ~ typ ~ expr => GlobalDecl(loc, x, typ, expr)
+  }
 
   def importStmt: Parser[Global] = ???
 
-  def function: Parser[FuncExpr] = location ~ name ~ ("(" ~> params <~ ")") ~ ("->" ~> typ) ~ stmt ^^ {
+  def function: Parser[FuncExpr] = location ~ name ~ ("(" ~> params <~ ")") ~ (":" ~> typ) ~ stmt ^^ {
     case l ~ Name(id) ~ p ~ t ~ b => FuncExpr(l, t, id, p, b)
   }
 
@@ -48,7 +50,8 @@ object Parse extends RegexParsers {
   // STATEMENTS //
   ////////////////
 
-  def stmt: Parser[Stmt] = ifStmt | whileStmt | single <~ ";" | block | failure("Not a valid statement.")
+  def stmt: Parser[Stmt] = ifStmt | whileStmt | single <~ semi | block |
+    failure("Not a valid statement.")
 
   def block: Parser[Block] = ("{" ~> rep(stmt) <~"}") ^^ { case ls => Block(ls) }
 
@@ -60,13 +63,16 @@ object Parse extends RegexParsers {
     case cond ~ body => While(cond, body)
   }
 
-  def single: Parser[Stmt] = declare | assign | discard | returnStmt | "break" ^^^ Break() | "continue" ^^^ Continue()
+  def single: Parser[Stmt] = declare | assign | discard | returnStmt |
+    "break" ^^^ Break() | "continue" ^^^ Continue()
 
   def declare: Parser[Declare] = ("let" ~> name) ~ (":" ~> typ) ~ ("=" ~> expr) ^^ {
     case Name(id) ~ t ~ e => Declare(id, t, e)
   }
 
-  def assign: Parser[Assign] = (name ~ ("=" ~> expr)) ^^ { case Name(id) ~ e => Assign(id, e) }
+  def assign: Parser[Assign] = (name ~ ("=" ~> expr)) ^^ {
+    case Name(id) ~ e => Assign(id, e)
+  }
 
   def discard: Parser[Discard] = expr ^^ Discard
 
@@ -137,12 +143,12 @@ object Parse extends RegexParsers {
 
   def bool: Parser[ConstBool] = ("True" | "False") ^^ { b => ConstBool(b == "True") }
 
-  def string: Parser[ConstString] = ("\"" ~> "[^\"]*".r <~ "\"") ^^ { s => ConstString(s) }
+  def string: Parser[ConstString] = ("\"" ~> "[^\"]*".r <~ "\"") ^^ ConstString
 
   def number: Parser[ConstFloat] = "\\d+(:?\\.\\d*)?|\\.\\d+".r ^^ { n => ConstFloat(n.toDouble) }
 
   ///////////
-  // Misc. //
+  // Other //
   ///////////
 
   def args: Parser[List[Expr]] = ???
@@ -151,18 +157,24 @@ object Parse extends RegexParsers {
     case p => p map { case Name(id) ~ t => (id, t) } toMap
   }
 
-  def keyword: Parser[String] = ( "if" | "else" | "while" | "break" | "continue"
-                              | "function" | "return" | "frontend" | "backend"
-                              | "let" )
-
-  def name: Parser[Name] = not(keyword) ~> "[\\w_][\\w_\\d]*".r ^^ { x => Name(x) }
+  def name: Parser[Name] = not(keyword) ~> "[\\w_][\\w_\\d]*".r ^^ Name
 
   def typ: Parser[Typ] = ( "String" ^^^ Str()
                            | "Number" ^^^ Num()
                            | "List" ^^^ Ls()
                            | "Dictionary" ^^^ Dict()
                            | "Boolean" ^^^ Bool()
+                           | "Void" ^^^ Bool()
                            | failure("Invalid type") )
 
   def javascript: Parser[Expr] = ???
+
+  ///////////
+  // Misc. //
+  ///////////
+  def keyword: Parser[String] = ( "if" | "else" | "while" | "break" | "continue"
+                              | "function" | "return" | "frontend" | "backend"
+                              | "let" )
+
+  def semi: Parser[String] = ";" | failure("Expected semicolon.")
 }

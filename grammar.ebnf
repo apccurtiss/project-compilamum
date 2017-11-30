@@ -2,9 +2,9 @@
 <Program> ::= { <Global> }
 
 <Global> ::= <GlobalDecl> | <ImportStmt> | <Function>
-<GlobalDecl> ::= <Location> <Typ> <Name> "=" <Const> ";"
+<GlobalDecl> ::= <Location> <Name> ":" <Typ> "=" <Expr> ";"
 <ImportStmt> ::= "import" <Location> <Javascript> "as" <Name> "(" <Params> ")" ";"
-<Function> ::= <Location> <Typ> <Name> "(" <Params> ")" <Stmt>
+<Function> ::= <Location> <Typ> <Name> "(" <Params> ")" ":" <Typ> <Stmt>
 <Locaiton> ::= "front" | "back"
 
 <Stmt> ::= <IfStmt> | <WhileStmt> | <Single> ";" | <Block>
@@ -42,6 +42,6 @@
 <Args> ::= [<Expr> {"," <Expr>}]
 <Params> ::= [<Typ> <Name> {"," <Typ> <Name>}]
 <Name> ::= regex("[\w_][\w_\d]*")
-<Typ> ::= "string" | "num" | "list" | "struct" | "void"
+<Typ> ::= "String" | "Number" | "List" | "Dictionary" | "Boolean" | "Void"
 
 <JavaScript> ::= <String>

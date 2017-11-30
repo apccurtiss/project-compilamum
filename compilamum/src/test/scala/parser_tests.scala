@@ -49,19 +49,25 @@ class ParsingSpec extends FlatSpec with Matchers {
   }
 
   it should "parse functions" in {
-    Parse("frontend one() -> Number { return 1; }") should be (
+    Parse("frontend one(): Number { return 1; }") should be (
       Right(Program(List(FuncExpr(Frontend(),Num(),"one",Map(),Block(List(Return(ConstFloat(1.0))))))))
     )
   }
 
+  it should "parse global declarations" in {
+    Parse("frontend x: Number = 1;") should be (
+      Right(Program(List(GlobalDecl(Frontend(),"x",Num(),ConstFloat(1.0)))))
+    )
+  }
+
   it should "parse function call" in {
-    Parse("frontend bottom() -> Number { return bottom(); }") should be (
+    Parse("frontend bottom(): Number { return bottom(); }") should be (
       Right(Program(List(FuncExpr(Frontend(),Num(),"bottom",Map(),Block(List(Return(Call(Name("bottom"), List()))))))))
     )
   }
 
   it should "parse parameters in functions correctly" in {
-    Parse("frontend bottom(i: Number, s: String) -> Number { return bottom(i, s); }") should be (
+    Parse("frontend bottom(i: Number, s: String): Number { return bottom(i, s); }") should be (
       Right(Program(List(FuncExpr(
         Frontend(),Num(),"bottom",Map(("i", Num()), ("s", Str())),
         Block(List(Return(Call(Name("bottom"), List(Name("i"), Name("s"))))))
