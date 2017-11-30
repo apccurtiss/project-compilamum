@@ -7,4 +7,7 @@ libraryDependencies ++= Seq(
   "org.scala-lang.modules"  %% "scala-parser-combinators" % "1.0.4"
 )
 
-scalacOptions ++= Seq( "-deprecation" )
+scalacOptions ++= Seq(
+  "-deprecation",
+  "-feature"
+)

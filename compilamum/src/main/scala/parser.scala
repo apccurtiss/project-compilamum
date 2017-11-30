@@ -8,7 +8,7 @@ import ast._
 
 case class ParseError(line: Int, column: Int, msg: String) extends ErrorMum
 
-object Parseamum extends RegexParsers {
+object Parse extends RegexParsers {
   override def failure(msg: String) = "" ~> super.failure(msg)
   override def skipWhitespace = true
   override val whiteSpace = "[ \t\r\f]+".r
@@ -86,8 +86,8 @@ object Parseamum extends RegexParsers {
       case (ConstFloat(l), "*" ~ ConstFloat(r)) => ConstFloat(l * r)
       case (ConstFloat(l), "/" ~ ConstFloat(r)) => ConstFloat(l / r)
       case (acc, op ~ next) => op match {
-        case "*" => Bop(Times(), acc, next)
-        case "/" => Bop(Div(), acc, next)
+        case "*" => Bop(Star(), acc, next)
+        case "/" => Bop(FSlash(), acc, next)
       }
     }
   }

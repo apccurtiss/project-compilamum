@@ -1,12 +1,12 @@
-package generateFunctions
+package cutter
 
 import compilamum.ErrorMum
 import ast._
 
-object GenFunc{
+object Cut{
   def apply(tree:Node): Either[ErrorMum,Node]={
     Right(tree)
   }
 }
 
-case class GenerateError() extends ErrorMum
+case class CutError() extends ErrorMum
