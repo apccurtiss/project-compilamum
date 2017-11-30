@@ -16,12 +16,12 @@ object Generate {
   def gen(tree: Node): String = tree match {
     case Program(lines) => lines map gen mkString("\n")
 
-    case GlobalDecl(_, name, _, value) => s"var $name = ${gen(value)}"
+    case GlobalDecl(_, name, _, value) => s"var $name = ${gen(value)};"
     case FuncExpr(_, _, name, params, body) => {
       s"function $name(${params map(_._1) mkString(", ")}) {\n${gen(body)}\n}"
     }
 
-    case Block(stmts) => stmts map gen mkString("\n")
+    case Block(stmts) => stmts map gen map { line => s"$line;" } mkString("\n")
     case Discard(stmt) => gen(stmt)
 
     case Call(f, args) => s"${gen(f)}(${args map gen mkString(", ")})"

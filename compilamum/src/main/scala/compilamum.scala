@@ -5,6 +5,7 @@ import netCall.{GenNetCall, NetCallError}
 import flatten.{FlattenNetCall,FlattenError}
 import cutter.{Cut,CutError}
 import generater.{Generate,GenerateError}
+import runtime.{AddFrontendRuntime,AddBackendRuntime}
 
 import java.io._
 
@@ -48,7 +49,7 @@ object Compile {
     ast flatMap {
       case (client, server) => Generate(client) flatMap {
         client => Generate(server) map {
-          server => (client, server)
+          server => (AddFrontendRuntime(client), AddBackendRuntime(server))
         }
       }
     }
