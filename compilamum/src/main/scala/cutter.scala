@@ -15,6 +15,15 @@ object Cut {
       Right((Program(client), Program(server)))
     }
   }
+  
+  def classify(tree: Node): Map[String, Location] = tree match {
+    case Program(globals) => globals map {
+      case GlobalDecl(loc, name, _, _) => (name, loc)
+      case FuncDecl(loc, _, name, _, _) => (name, loc)
+      case Import(loc, _, name, _) => (name, loc)
+    } toMap
+    case _ => throw new IllegalArgumentException("The argument to classify must be a Program");
+  }
 }
 
 case class CutError() extends Erramum
