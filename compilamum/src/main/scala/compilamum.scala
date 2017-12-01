@@ -44,13 +44,13 @@ object Main {
 
 object Compile {
   def apply(code: String): Either[Erramum, (String, String)] = {
-    val ast = Parse(code)
-    ast flatMap Typecheck.apply flatMap Cut.apply flatMap {
-      case (client, server) => Generate(client) flatMap {
-        client => Generate(server) map {
-          server => (client, server)
-        }
-      }
-    }
+    for {
+      ast <- Parse(code)
+      checked_ast <- Typecheck(ast)
+      pair <- Cut(checked_ast)
+      (client, server) = pair
+      client_out <- Generate(client)
+      server_out <- Generate(server)
+    } yield (client_out, server_out)
   }
 }
