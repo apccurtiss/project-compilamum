@@ -13,6 +13,9 @@ case class Num() extends Typ
 case class Bool() extends Typ
 case class Ls() extends Typ
 case class Dict() extends Typ
+case class Void() extends Typ
+case class Any() extends Typ
+case class FuncType(args: List[Typ], ret: Typ) extends Typ
 
 // deal with the distinction of things not being unary ops at compile time, not parse time
 abstract class Op extends Node
