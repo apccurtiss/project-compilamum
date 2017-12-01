@@ -1,10 +1,10 @@
 package generater
 
-import compilamum.ErrorMum
+import compilamum.Erramum
 import ast._
 
 object Generate {
-  def apply(tree: Node): Either[ErrorMum, String] = {
+  def apply(tree: Node): Either[Erramum, String] = {
     try {
       Right(gen(tree))
     }
@@ -39,4 +39,4 @@ object Generate {
   }
 }
 
-case class GenerateError(msg: String) extends ErrorMum
+case class GenerateError(msg: String) extends Erramum

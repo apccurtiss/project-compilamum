@@ -1,13 +1,13 @@
 package compilamum
 
 import parser.{Parse,ParseError}
-import netCall.{GenNetCall, NetCallError}
-import flatten.{FlattenNetCall,FlattenError}
+import typechecker.{Typecheck,TypeError}
 import cutter.{Cut,CutError}
 import generater.{Generate,GenerateError}
-import runtime.{AddFrontendRuntime,AddBackendRuntime}
 
 import java.io._
+
+abstract class Erramum extends Throwable
 
 object Main {
   def main(args: Array[String]): Unit = {
@@ -22,8 +22,7 @@ object Main {
       case Left(ParseError(row, col, msg)) => {
         printErr(s"$code ".split("\n")(row), col, s"${row+1}:${col+1} Parse error: $msg")
       }
-      case Left(NetCallError()) => println("Net call error.")
-      case Left(FlattenError()) => println("Flatten error.")
+      case Left(TypeError()) => println("Type error.")
       case Left(CutError()) => println("Cut error.")
       case Left(GenerateError(msg)) => println(s"Generate error: $msg")
       case _ => ???
@@ -44,16 +43,19 @@ object Main {
 }
 
 object Compile {
-  def apply(code: String): Either[ErrorMum, (String, String)] = {
-    val ast = Parse(code) flatMap GenNetCall.apply flatMap FlattenNetCall.apply flatMap Cut.apply
+  def apply(code: String): Either[Erramum, (String, String)] = {
+    val ast = Parse(code)
     ast flatMap {
+      Typecheck(_) match {
+        case Some(err) => Left(err)
+        case None => ast
+      }
+    } flatMap Cut.apply flatMap {
       case (client, server) => Generate(client) flatMap {
         client => Generate(server) map {
-          server => (AddFrontendRuntime(client), AddBackendRuntime(server))
+          server => (client, server)
         }
       }
     }
   }
 }
-
-abstract class ErrorMum extends Throwable
