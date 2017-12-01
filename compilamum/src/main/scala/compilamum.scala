@@ -45,12 +45,7 @@ object Main {
 object Compile {
   def apply(code: String): Either[Erramum, (String, String)] = {
     val ast = Parse(code)
-    ast flatMap {
-      Typecheck(_) match {
-        case Some(err) => Left(err)
-        case None => ast
-      }
-    } flatMap Cut.apply flatMap {
+    ast flatMap Typecheck.apply flatMap Cut.apply flatMap {
       case (client, server) => Generate(client) flatMap {
         client => Generate(server) map {
           server => (client, server)
