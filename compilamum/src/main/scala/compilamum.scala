@@ -3,7 +3,7 @@ package compilamum
 import parser.{Parse,ParseError}
 import typechecker.{Typecheck,TypeError}
 import cutter.{Cut,CutError}
-import generater.{Generate,GenerateError}
+import generator.{Generate,GenerateError}
 
 import java.io._
 
