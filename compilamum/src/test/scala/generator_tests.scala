@@ -1,4 +1,4 @@
-import generater.{Generate,GenerateError}
+import generator.{Generate,GenerateError}
 import ast._
 
 import org.scalatest._

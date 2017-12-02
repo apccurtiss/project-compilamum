@@ -1,4 +1,4 @@
-package generater
+package generator
 
 import compilamum.Erramum
 import ast._
