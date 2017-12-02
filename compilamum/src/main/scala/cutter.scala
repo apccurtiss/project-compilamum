@@ -1,5 +1,8 @@
 package cutter
 
+import scala.util.Random
+import scala.collection.mutable.LinkedHashMap
+
 import compilamum.Erramum
 import ast._
 
@@ -26,7 +29,7 @@ object Cut {
   }
   
   // Do I need an abstract class here???
-  case class Extraction(oldExpr: Expr, newExprs: Map[String, Expr]) {
+  case class Extraction(oldExpr: Expr, newExprs: LinkedHashMap[String, Expr]) {
     def map(f: Expr => Expr): Extraction = Extraction(f(oldExpr), newExprs)
     def flatMap(f: Expr => Extraction): Extraction = {
       f(oldExpr) match { case Extraction(o, n) => Extraction(o, n ++ newExprs) }
@@ -60,11 +63,25 @@ object Cut {
     arg map (_ map f)
   }
   
+  val gen = new Random(13)
+  
+  def genname(): String = {
+    gen.alphanumeric.take(10).foldLeft("")((t, o) => {t :+ o})
+  }
+  
   def extract(key: Map[String, Location], context: Location)(tree: Expr): Either[CutError, Extraction] = {
     val recurse = extract(key, context)(_)
     tree match {
       case Call(Name(id), args) => if ((key contains id) && ((key get id) != Some(context))) {
-        Right(Extraction(Name("__cut_tmp_var__"), Map(("__cut_tmp_var__", tree))))
+        val argsres = swap(args map recurse) map {_.foldLeft(Extraction(Call(Name(id), List()), LinkedHashMap()))({
+          (total_extr, other_extr) => total_extr.combine({
+            case (Call(x, args), other) => Call(x, other::args)
+          })( other_extr )
+        })}
+        
+        argsres map {_ flatMap {
+          tree => val r = genname(); Extraction(Name("__cut_tmp_"++r), LinkedHashMap(("__cut_tmp_var__"++r, tree)))
+        }}
       } else {
         swap(args map recurse) map {_.reduce({
           (total_extr, other_extr) => total_extr.combine({
@@ -90,9 +107,9 @@ object Cut {
       case Name(id) => if ((key contains id) && ((key get id) != Some(context))) {
         Left(CutError(s"Found the global variable `${id}` in the wrong location context"))
       } else {
-        Right(Extraction(tree, Map()))
+        Right(Extraction(tree, LinkedHashMap()))
       }
-      case _ => Right(Extraction(tree, Map()))
+      case _ => Right(Extraction(tree, LinkedHashMap()))
     }
   }
   
@@ -105,7 +122,7 @@ object Cut {
             extract(key, context)(condition) map {
               case Extraction(expr, extrs) => (extrs map {
                 case ((key, value)) => NetCall(key, value)
-              }).toList ++ List(If(condition, Block(new_body), Block(new_else)))
+              }).toList.reverse ++ List(If(condition, Block(new_body), Block(new_else)))
             }
           }
         }
@@ -116,7 +133,7 @@ object Cut {
           extract(key, context)(condition) map {
             case Extraction(expr, extrs) => (extrs map {
               case ((key, value)) => NetCall(key, value)
-            }).toList ++ List(While(expr, Block(new_body)))
+            }).toList.reverse ++ List(While(expr, Block(new_body)))
           }
         }
       }
@@ -127,28 +144,28 @@ object Cut {
         extract(key, context)(from) map {
           case Extraction(expr, extrs) => (extrs map {
             case ((key, value)) => NetCall(key, value)
-          }).toList ++ List(Declare(to, typ, expr))
+          }).toList.reverse ++ List(Declare(to, typ, expr))
         }
       }
       case Assign(to, from) => {
         extract(key, context)(from) map {
           case Extraction(expr, extrs) => (extrs map {
             case ((key, value)) => NetCall(key, value)
-          }).toList ++ List(Assign(to, expr))
+          }).toList.reverse ++ List(Assign(to, expr))
         }
       }
       case Discard(value) => {
         extract(key, context)(value) map {
           case Extraction(expr, extrs) => (extrs map {
             case ((key, value)) => NetCall(key, value)
-          }).toList ++ List(Discard(expr))
+          }).toList.reverse ++ List(Discard(expr))
         }
       }
       case Return(value) => {
         extract(key, context)(value) map {
           case Extraction(expr, extrs) => (extrs map {
             case ((key, value)) => NetCall(key, value)
-          }).toList ++ List(Return(expr))
+          }).toList.reverse ++ List(Return(expr))
         }
       }
       
