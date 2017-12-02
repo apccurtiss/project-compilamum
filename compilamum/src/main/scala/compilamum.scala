@@ -22,7 +22,7 @@ object Main {
       case Left(ParseError(row, col, msg)) => {
         printErr(s"$code ".split("\n")(row), col, s"${row+1}:${col+1} Parse error: $msg")
       }
-      case Left(TypeError()) => println("Type error.")
+      case Left(TypeError(msg)) => println(s"Type error: $msg")
       case Left(CutError()) => println("Cut error.")
       case Left(GenerateError(msg)) => println(s"Generate error: $msg")
       case _ => ???
