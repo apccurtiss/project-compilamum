@@ -34,7 +34,7 @@ case class Minus() extends Op  // "-"
 case class Ge() extends Op // ">="
 
 abstract class Expr extends Node
-case class Call(name: Expr, args: List[Expr]) extends Expr
+case class Call(name: String, args: List[Expr]) extends Expr
 case class Bop(op: Op, left: Expr, right: Expr) extends Expr
 case class Uop(op: Op, expr: Expr) extends Expr
 case class ListExpr(items: List[Expr]) extends Expr
@@ -56,7 +56,7 @@ case class Return(value: Expr) extends Stmt
 case class If(condition: Expr, body: Stmt, orelse: Stmt) extends Stmt
 case class While(condition: Expr, body: Stmt) extends Stmt
 case class Block(body: List[Stmt]) extends Stmt
-case class NetCall(to: String, from: Expr) extends Stmt
+case class NetCall(to: String, func: String, args: List[Expr]) extends Stmt
 
 abstract class Global extends Node
 case class FuncDecl(loc: Location, typ: Typ, name: String, params: Map[String,Typ], body: Stmt) extends Global

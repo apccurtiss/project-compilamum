@@ -116,7 +116,7 @@ object Parse extends RegexParsers {
   def atom: Parser[Expr] = const | call | name | "(" ~> expr <~ ")" | failure("Unexpected end of line.")
 
   def call: Parser[Expr] = name ~ ("("~> repsep(expr, ",") <~")") ^^ {
-    case n ~ ls => Call(n, ls)
+    case Name(id) ~ ls => Call(id, ls)
   }
 
   def list: Parser[Expr] = ???

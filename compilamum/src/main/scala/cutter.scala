@@ -24,7 +24,7 @@ object Cut {
       case GlobalDecl(loc, name, _, _) => (name, loc)
       case FuncDecl(loc, _, name, _, _) => (name, loc)
       case Import(loc, _, name, _) => (name, loc)
-    } toMap 
+    } toMap
     case _ => throw new IllegalArgumentException("The argument to classify must be a Program");
   }
   
@@ -36,6 +36,11 @@ object Cut {
     }
     def combine(f: (Expr, Expr) => Expr)(other: Extraction) = {
       Extraction(f(oldExpr, other.oldExpr), newExprs ++ other.newExprs)
+    }
+    def toStmts(): List[Stmt] = {
+      (newExprs map {
+        case ((key, Call(func, args))) => NetCall(key, func, args)
+      }).toList.reverse
     }
   }
   
@@ -63,8 +68,9 @@ object Cut {
     arg map (_ map f)
   }
   
+  // Yo, this is a hack to avoid passing around an explicit counter
+  // or wrapping everything in yet another monad. HELP!
   val gen = new Random(13)
-  
   def genname(): String = {
     gen.alphanumeric.take(10).foldLeft("")((t, o) => {t :+ o})
   }
@@ -72,8 +78,8 @@ object Cut {
   def extract(key: Map[String, Location], context: Location)(tree: Expr): Either[CutError, Extraction] = {
     val recurse = extract(key, context)(_)
     tree match {
-      case Call(Name(id), args) => if ((key contains id) && ((key get id) != Some(context))) {
-        val argsres = swap(args map recurse) map {_.foldLeft(Extraction(Call(Name(id), List()), LinkedHashMap()))({
+      case Call(id, args) => if ((key contains id) && ((key get id) != Some(context))) {
+        val argsres = swap(args map recurse) map {_.foldLeft(Extraction(Call(id, List()), LinkedHashMap()))({
           (total_extr, other_extr) => total_extr.combine({
             case (Call(x, args), other) => Call(x, other::args)
           })( other_extr )
@@ -86,7 +92,7 @@ object Cut {
         swap(args map recurse) map {_.reduce({
           (total_extr, other_extr) => total_extr.combine({
             case (Call(name, args), other) => Call(name, other::args)
-            case (start, other) => Call(Name(id), List(start, other))
+            case (start, other) => Call(id, List(start, other))
           })( other_extr )
         })}
       }
@@ -120,9 +126,7 @@ object Cut {
         new_body => recurse(orelse) flatMap {
           new_else => {
             extract(key, context)(condition) map {
-              case Extraction(expr, extrs) => (extrs map {
-                case ((key, value)) => NetCall(key, value)
-              }).toList.reverse ++ List(If(condition, Block(new_body), Block(new_else)))
+              case extr @ Extraction(expr, _) => extr.toStmts ++ List(If(expr, Block(new_body), Block(new_else)))
             }
           }
         }
@@ -131,9 +135,7 @@ object Cut {
       case While(condition, body) => recurse(body) flatMap {
         new_body => {
           extract(key, context)(condition) map {
-            case Extraction(expr, extrs) => (extrs map {
-              case ((key, value)) => NetCall(key, value)
-            }).toList.reverse ++ List(While(expr, Block(new_body)))
+            case extr @ Extraction(expr, _) => extr.toStmts ++ List(While(expr, Block(new_body)))
           }
         }
       }
@@ -142,30 +144,22 @@ object Cut {
       
       case Declare(to, typ, from) => {
         extract(key, context)(from) map {
-          case Extraction(expr, extrs) => (extrs map {
-            case ((key, value)) => NetCall(key, value)
-          }).toList.reverse ++ List(Declare(to, typ, expr))
+          case extr @ Extraction(expr, _) => extr.toStmts ++ List(Declare(to, typ, expr))
         }
       }
       case Assign(to, from) => {
         extract(key, context)(from) map {
-          case Extraction(expr, extrs) => (extrs map {
-            case ((key, value)) => NetCall(key, value)
-          }).toList.reverse ++ List(Assign(to, expr))
+          case extr @ Extraction(expr, _) => extr.toStmts ++ List(Assign(to, expr))
         }
       }
       case Discard(value) => {
         extract(key, context)(value) map {
-          case Extraction(expr, extrs) => (extrs map {
-            case ((key, value)) => NetCall(key, value)
-          }).toList.reverse ++ List(Discard(expr))
+          case extr @ Extraction(expr, _) => extr.toStmts ++ List(Discard(expr))
         }
       }
       case Return(value) => {
         extract(key, context)(value) map {
-          case Extraction(expr, extrs) => (extrs map {
-            case ((key, value)) => NetCall(key, value)
-          }).toList.reverse ++ List(Return(expr))
+          case extr @ Extraction(expr, _) => extr.toStmts ++ List(Return(expr))
         }
       }
       

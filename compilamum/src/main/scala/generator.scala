@@ -24,7 +24,7 @@ object Generate {
     case Block(stmts) => stmts map gen map { line => s"$line;" } mkString("\n")
     case Discard(stmt) => gen(stmt)
 
-    case Call(f, args) => s"${gen(f)}(${args map gen mkString(", ")})"
+    case Call(f, args) => s"${f}(${args map gen mkString(", ")})"
 
     // TODO(alex) Implement operator precedence
     case Bop(Plus(), e1, e2) => s"(${gen(e1)} + ${gen(e2)})"

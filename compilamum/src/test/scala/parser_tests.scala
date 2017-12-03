@@ -62,7 +62,7 @@ class ParsingSpec extends FlatSpec with Matchers {
 
   it should "parse function call" in {
     Parse("frontend bottom(): Number { return bottom(); }") should be (
-      Right(Program(List(FuncDecl(Frontend(),Num(),"bottom",Map(),Block(List(Return(Call(Name("bottom"), List()))))))))
+      Right(Program(List(FuncDecl(Frontend(),Num(),"bottom",Map(),Block(List(Return(Call("bottom", List()))))))))
     )
   }
 
@@ -70,7 +70,7 @@ class ParsingSpec extends FlatSpec with Matchers {
     Parse("frontend bottom(i: Number, s: String): Number { return bottom(i, s); }") should be (
       Right(Program(List(FuncDecl(
         Frontend(),Num(),"bottom",Map(("i", Num()), ("s", Str())),
-        Block(List(Return(Call(Name("bottom"), List(Name("i"), Name("s"))))))
+        Block(List(Return(Call("bottom", List(Name("i"), Name("s"))))))
       ))))
     )
   }

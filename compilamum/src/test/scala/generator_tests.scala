@@ -21,6 +21,6 @@ class GeneratingSpec extends FlatSpec with Matchers {
   }
 
   it should "generate calls" in {
-    Generate(Call(Name("foo"), List(ConstFloat(1.0), Name("x")))) should be (Right("foo(1.0, x)"))
+    Generate(Call("foo", List(ConstFloat(1.0), Name("x")))) should be (Right("foo(1.0, x)"))
   }
 }
