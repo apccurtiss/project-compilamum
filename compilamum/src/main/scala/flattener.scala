@@ -7,6 +7,12 @@ import cutter.CutError
 import ast._
 
 object Flatten {
+  def apply(key: Map[String, Location], tree: Node): Either[CutError, Program] = tree match {
+    case Program(globals) => {
+      swap(globals map (remold(key)(_))) map Program
+    }
+  }
+  
   // Do I need an abstract class here???
   case class Extraction(oldExpr: Expr, newExprs: LinkedHashMap[String, Expr]) {
     def map(f: Expr => Expr): Extraction = Extraction(f(oldExpr), newExprs)
@@ -18,7 +24,7 @@ object Flatten {
     }
     def toStmts(): List[Stmt] = {
       (newExprs map {
-        case ((key, Call(func, args))) => NetCall(key, func, args)
+        case ((key, Call(func, args))) => NetCall(key, func, args, Set())
         case ((_,x)) => throw new IllegalArgumentException(s"You shouldn't have put ${x} into an extraction!")
       }).toList.reverse
     }
@@ -55,6 +61,9 @@ object Flatten {
     gen.alphanumeric.take(10).foldLeft("")((t, o) => {t :+ o})
   }
   
+  // Extracts all call nodes with different locations from the current context
+  // and replaces them with a variable name. Then, it returns the new expression
+  // with the replacements, and a mapping from variable name to removed expression.
   def extract(key: Map[String, Location], context: Location)(tree: Expr): Either[CutError, Extraction] = {
     val recurse = extract(key, context)(_)
     tree match {
@@ -100,6 +109,12 @@ object Flatten {
     }
   }
   
+  
+  // This function takes a statement, calls extract on any contained expressions,
+  // and returns a list of statements that perform the extraction. It also recursively
+  // calls itself on any stmts that the stmt itself contains.
+  //
+  // TODO: Consider replacing Map with just a list os statements containg the assignments?
   def flatten(key: Map[String, Location], context: Location)(stmt: Stmt): Either[CutError, List[Stmt]] = {
     val recurse = flatten(key, context)(_)
     stmt match {
@@ -148,6 +163,7 @@ object Flatten {
     }
   }
   
+  // applies flatten to every statement in function bodies.
   def remold(key: Map[String, Location])(global: Global): Either[CutError, Global] = global match {
     case FuncDecl(loc, typ, name, params, body) => flatten(key, loc)(body) map {
       ls => { FuncDecl(loc, typ, name, params, Block(ls)) }

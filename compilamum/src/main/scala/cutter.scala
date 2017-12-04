@@ -2,12 +2,16 @@ package cutter
 
 import compilamum.Erramum
 import ast._
+import flattener.Flatten
+import cacher.Cache
 
 object Cut {
   def apply(tree: Node): Either[Erramum, (Node, Node)] = {
     val key = classify(tree)
-    tree match {
-      case Program(globals) => {
+    val flat_tree = Flatten(key, tree)
+    
+    flat_tree map Cache.apply match {
+      case Right(Program(globals)) => {
         val (client, server) = globals partition {
           case GlobalDecl(Frontend(), _, _, _) => true
           case FuncDecl(Frontend(), _, _, _, _) => true
