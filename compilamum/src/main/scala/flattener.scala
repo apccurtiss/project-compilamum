@@ -9,7 +9,7 @@ import ast._
 object Flatten {
   def apply(key: Map[String, Location], tree: Node): Either[CutError, Program] = tree match {
     case Program(globals) => {
-      swap(globals map (remold(key)(_))) map Program
+      swap(globals map remold(key)) map Program
     }
   }
   

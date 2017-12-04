@@ -8,7 +8,7 @@ class CuttingSpec extends FlatSpec with Matchers {
     Flatten.flatten(Map(("x", Backend())), Frontend())(
       Return(Call("x", List()))
     ) should matchPattern {case Right(List(
-      NetCall(_, "x", List()),
+      NetCall(_, "x", List(), _),
       Return(Name(_))
     )) => }
   }
@@ -17,7 +17,7 @@ class CuttingSpec extends FlatSpec with Matchers {
     Flatten.flatten(Map(("x", Backend())), Frontend())(
       Return(Bop(Plus(), Call("x", List(Name("y"))), Name("y")))
     ) should matchPattern {case Right(List(
-      NetCall(_, "x", List(Name("y"))),
+      NetCall(_, "x", List(Name("y")), _),
       Return(Bop(Plus(), Name(_), Name("y"))
     ))) => }
   }
@@ -26,8 +26,8 @@ class CuttingSpec extends FlatSpec with Matchers {
     Flatten.flatten(Map(("x", Backend())), Frontend())(
       Return(Call("x", List(Call("x", List(Name("y"))))))
     ) should matchPattern {case Right(List(
-      NetCall(a, "x", List(Name("y"))),
-      NetCall(b, "x", List(Name(c))),
+      NetCall(a, "x", List(Name("y")), _),
+      NetCall(b, "x", List(Name(c)), _),
       Return(Name(d))
     )) => }
   }
