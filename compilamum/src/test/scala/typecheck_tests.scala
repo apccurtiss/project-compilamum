@@ -16,7 +16,15 @@ class TypecheckSpec extends FlatSpec with Matchers {
   }
 
   it should "disallow invalid binary expressions" in {
-    Typecheck(Bop(Minus(), ConstFloat(1.0), ConstBool(false))) shouldBe a[Left[TypeError,_]]
-    Typecheck(Bop(Plus(), ConstBool(true), ConstString("asdf"))) shouldBe a[Left[TypeError,_]]
+    Typecheck(Bop(Minus(), ConstFloat(1.0), ConstBool(false))) shouldBe a [Left[TypeError,_]]
+    Typecheck(Bop(Plus(), ConstBool(true), ConstString("asdf"))) shouldBe a [Left[TypeError,_]]
+  }
+
+  it should "allow variables" in {
+    Typecheck(Block(List(Declare("x", Num(), ConstFloat(1.0)), Discard(Bop(Plus(), Name("x"), ConstFloat(1.0)))))) shouldBe a [Right[_,Node]]
+  }
+
+  it should "disallow mismatched variable types" in {
+    Typecheck(Block(List(Declare("x", Num(), ConstFloat(1.0)), Declare("y", Bool(), ConstBool(false)), Discard(Bop(Plus(), Name("x"), Name("y")))))) shouldBe a [Left[TypeError,_]]
   }
 }

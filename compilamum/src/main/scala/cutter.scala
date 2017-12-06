@@ -20,6 +20,7 @@ object Cut {
         }
         Right((Program(client), Program(server)))
       }
+      case Left(err) => Left(err)
     }
   }
 

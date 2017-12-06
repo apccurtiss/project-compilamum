@@ -12,7 +12,7 @@ object Flatten {
       swap(globals map remold(key)) map Program
     }
   }
-  
+
   // Do I need an abstract class here???
   case class Extraction(oldExpr: Expr, newExprs: LinkedHashMap[String, Expr]) {
     def map(f: Expr => Expr): Extraction = Extraction(f(oldExpr), newExprs)
@@ -29,7 +29,7 @@ object Flatten {
       }).toList.reverse
     }
   }
-  
+
   // TODO:
   // THIS IS A HORRID HACK: IZAAK DID THIS
   // Hey, if someone can figure out how to make this less ugly, please do so!
@@ -43,24 +43,24 @@ object Flatten {
       Right(ls map {_.toOption.get})
     }
   }
-  
+
   // TODO: Make this generic?
   def mapM[A,B,C](xs:List[A])(f:A=>Either[C,B]) : Either[C, List[B]] = {
     swap(xs.map(f))
   }
-  
+
   // TODO: Make this generic?
   def map2[A](arg: Either[A, Extraction])(f: Expr => Expr): Either[A, Extraction] = {
     arg map (_ map f)
   }
-  
+
   // Yo, this is a hack to avoid passing around an explicit counter
   // or wrapping everything in yet another monad. HELP!
   val gen = new Random(13)
   def genname(): String = {
     gen.alphanumeric.take(10).foldLeft("")((t, o) => {t :+ o})
   }
-  
+
   // Extracts all call nodes with different locations from the current context
   // and replaces them with a variable name. Then, it returns the new expression
   // with the replacements, and a mapping from variable name to removed expression.
@@ -74,7 +74,7 @@ object Flatten {
             case (_, _) => throw new IllegalArgumentException("Don't change the intial value for foldLeft, idiot!")
           })( other_extr )
         })}
-        
+
         argsres map {_ flatMap {
           tree => val r = genname(); Extraction(Name("__cut_tmp_"++r), LinkedHashMap(("__cut_tmp_var__"++r, tree)))
         }}
@@ -93,7 +93,7 @@ object Flatten {
         })( other_extr )
       })}
       case DictExpr(items) => ???
-      
+
       case Bop(op, left, right) => for {
         left <- recurse(left)
         right <- recurse(right)
@@ -108,8 +108,8 @@ object Flatten {
       case _ => Right(Extraction(tree, LinkedHashMap()))
     }
   }
-  
-  
+
+
   // This function takes a statement, calls extract on any contained expressions,
   // and returns a list of statements that perform the extraction. It also recursively
   // calls itself on any stmts that the stmt itself contains.
@@ -127,7 +127,7 @@ object Flatten {
           }
         }
       }
-      
+
       case While(condition, body) => recurse(body) flatMap {
         new_body => {
           extract(key, context)(condition) map {
@@ -135,9 +135,9 @@ object Flatten {
           }
         }
       }
-      
+
       case Block(body) => swap(body map recurse) map (_.flatten)
-      
+
       case Declare(to, typ, from) => {
         extract(key, context)(from) map {
           case extr @ Extraction(expr, _) => extr.toStmts ++ List(Declare(to, typ, expr))
@@ -158,11 +158,11 @@ object Flatten {
           case extr @ Extraction(expr, _) => extr.toStmts ++ List(Return(expr))
         }
       }
-      
+
       case _ => Right(List(stmt))
     }
   }
-  
+
   // applies flatten to every statement in function bodies.
   def remold(key: Map[String, Location])(global: Global): Either[CutError, Global] = global match {
     case FuncDecl(loc, typ, name, params, body) => flatten(key, loc)(body) map {

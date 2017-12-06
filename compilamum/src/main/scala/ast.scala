@@ -34,7 +34,7 @@ case class Minus() extends Op  // "-"
 case class Ge() extends Op // ">="
 
 abstract class Expr extends Node
-case class Call(name: String, args: List[Expr]) extends Expr
+case class Call(f: String, args: List[Expr]) extends Expr
 case class Bop(op: Op, left: Expr, right: Expr) extends Expr
 case class Uop(op: Op, expr: Expr) extends Expr
 case class ListExpr(items: List[Expr]) extends Expr
