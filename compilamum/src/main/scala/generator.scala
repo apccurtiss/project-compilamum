@@ -1,12 +1,13 @@
 package generator
 
 import compilamum.Erramum
+import runtime.RuntimeObject
 import ast._
 
 object Generate {
-  def apply(tree: Node): Either[Erramum, String] = {
+  def apply(tree: Node, runtime: List[RuntimeObject]): Either[Erramum, String] = {
     try {
-      Right(gen(tree))
+      Right(runtime.foldLeft(""){ case (acc, h) => acc + h.code } + gen(tree))
     }
     catch {
       case err: GenerateError => Left(err)

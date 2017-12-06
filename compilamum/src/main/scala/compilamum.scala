@@ -4,6 +4,7 @@ import parser.{Parse,ParseError}
 import typechecker.{Typecheck,TypeError}
 import cutter.{Cut,CutError}
 import generator.{Generate,GenerateError}
+import runtime.{Runtime}
 
 import java.io._
 
@@ -49,8 +50,8 @@ object Compile {
       checked_ast <- Typecheck(ast)
       pair <- Cut(checked_ast)
       (client, server) = pair
-      client_out <- Generate(client)
-      server_out <- Generate(server)
+      client_out <- Generate(client, Runtime.client)
+      server_out <- Generate(server, Runtime.server)
     } yield (client_out, server_out)
   }
 }

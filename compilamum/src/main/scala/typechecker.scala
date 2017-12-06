@@ -1,12 +1,21 @@
 package typechecker
 
 import compilamum.Erramum
+import runtime.{Runtime}
 import ast._
 
 object Typecheck {
-  def apply(tree: Node): Either[TypeError, Node] = typecheck(tree, Map()) match {
-    case err @ Left(_) => err
-    case _ => Right(tree)
+  def apply(tree: Node): Either[TypeError, Node] = {
+    val stdenv = (Runtime.client ++ Runtime.server).foldLeft(Map[String, Typ]()) {
+      case (acc, h) => h.export match {
+        case Some((name, typ)) => acc + (name -> typ)
+        case None => acc
+      }
+    }
+    typecheck(tree, stdenv) match {
+      case err @ Left(_) => err
+      case _ => Right(tree)
+    }
   }
 
   def typecheck(n: Node, env: Map[String,Typ]): Either[TypeError,Typ] = n match {
