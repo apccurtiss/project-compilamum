@@ -7,9 +7,9 @@ import cutter.CutError
 import ast._
 
 object Flatten {
-  def apply(key: Map[String, Location], tree: Node): Either[CutError, Program] = tree match {
+  def apply(tree: Node): Either[CutError, Program] = tree match {
     case Program(globals) => {
-      swap(globals map remold(key)) map Program
+      swap(globals map remold) map Program
     }
   }
 
@@ -24,7 +24,7 @@ object Flatten {
     }
     def toStmts(): List[Stmt] = {
       (newExprs map {
-        case ((key, Call(func, args))) => NetCall(key, func, args, Set())
+        case ((key, Call(func, args))) => CallStmt(key, func, args, Set(), "")
         case ((_,x)) => throw new IllegalArgumentException(s"You shouldn't have put ${x} into an extraction!")
       }).toList.reverse
     }
@@ -64,11 +64,10 @@ object Flatten {
   // Extracts all call nodes with different locations from the current context
   // and replaces them with a variable name. Then, it returns the new expression
   // with the replacements, and a mapping from variable name to removed expression.
-  def extract(key: Map[String, Location], context: Location)(tree: Expr): Either[CutError, Extraction] = {
-    val recurse = extract(key, context)(_)
+  def extract(tree: Expr): Either[CutError, Extraction] = {
     tree match {
-      case Call(id, args) => if ((key contains id) && ((key get id) != Some(context))) {
-        val argsres = swap(args map recurse) map {_.foldLeft(Extraction(Call(id, List()), LinkedHashMap()))({
+      case Call(id, args) => {
+        val argsres = swap(args map extract) map {_.foldLeft(Extraction(Call(id, List()), LinkedHashMap()))({
           (total_extr, other_extr) => total_extr.combine({
             case (Call(x, args), other) => Call(x, other::args)
             case (_, _) => throw new IllegalArgumentException("Don't change the intial value for foldLeft, idiot!")
@@ -78,15 +77,8 @@ object Flatten {
         argsres map {_ flatMap {
           tree => val r = genname(); Extraction(Name("__cut_tmp_"++r), LinkedHashMap(("__cut_tmp_var__"++r, tree)))
         }}
-      } else {
-        swap(args map recurse) map {_.reduce({
-          (total_extr, other_extr) => total_extr.combine({
-            case (Call(name, args), other) => Call(name, other::args)
-            case (start, other) => Call(id, List(start, other))
-          })( other_extr )
-        })}
       }
-      case ListExpr(items) => swap(items map recurse) map {_.reduce({
+      case ListExpr(items) => swap(items map extract) map {_.reduce({
         (total_extr, other_extr) => total_extr.combine({
           case (ListExpr(items), other) => ListExpr(other::items)
           case (start, other) => ListExpr(List(start, other))
@@ -95,16 +87,12 @@ object Flatten {
       case DictExpr(items) => ???
 
       case Bop(op, left, right) => for {
-        left <- recurse(left)
-        right <- recurse(right)
+        left <- extract(left)
+        right <- extract(right)
       } yield (Extraction(Bop(op, left.oldExpr, right.oldExpr), left.newExprs ++ right.newExprs))
-      case Uop(op, expr) => map2(recurse(expr))({ Uop(op, _) })
+      case Uop(op, expr) => map2(extract(expr))({ Uop(op, _) })
 
-      case Name(id) => if ((key contains id) && ((key get id) != Some(context))) {
-        Left(CutError(s"Found the global variable `${id}` in the wrong location context"))
-      } else {
-        Right(Extraction(tree, LinkedHashMap()))
-      }
+      case Name(id) => Right(Extraction(tree, LinkedHashMap()))
       case _ => Right(Extraction(tree, LinkedHashMap()))
     }
   }
@@ -115,46 +103,45 @@ object Flatten {
   // calls itself on any stmts that the stmt itself contains.
   //
   // TODO: Consider replacing Map with just a list os statements containg the assignments?
-  def flatten(key: Map[String, Location], context: Location)(stmt: Stmt): Either[CutError, List[Stmt]] = {
-    val recurse = flatten(key, context)(_)
+  def flatten(stmt: Stmt): Either[CutError, List[Stmt]] = {
     stmt match {
-      case If(condition, body, orelse) => recurse(body) flatMap {
-        new_body => recurse(orelse) flatMap {
+      case If(condition, body, orelse) => flatten(body) flatMap {
+        new_body => flatten(orelse) flatMap {
           new_else => {
-            extract(key, context)(condition) map {
+            extract(condition) map {
               case extr @ Extraction(expr, _) => extr.toStmts ++ List(If(expr, Block(new_body), Block(new_else)))
             }
           }
         }
       }
 
-      case While(condition, body) => recurse(body) flatMap {
+      case While(condition, body) => flatten(body) flatMap {
         new_body => {
-          extract(key, context)(condition) map {
+          extract(condition) map {
             case extr @ Extraction(expr, _) => extr.toStmts ++ List(While(expr, Block(new_body)))
           }
         }
       }
 
-      case Block(body) => swap(body map recurse) map (_.flatten)
+      case Block(body) => swap(body map flatten) map (_.flatten)
 
       case Declare(to, typ, from) => {
-        extract(key, context)(from) map {
+        extract(from) map {
           case extr @ Extraction(expr, _) => extr.toStmts ++ List(Declare(to, typ, expr))
         }
       }
       case Assign(to, from) => {
-        extract(key, context)(from) map {
+        extract(from) map {
           case extr @ Extraction(expr, _) => extr.toStmts ++ List(Assign(to, expr))
         }
       }
       case Discard(value) => {
-        extract(key, context)(value) map {
+        extract(value) map {
           case extr @ Extraction(expr, _) => extr.toStmts ++ List(Discard(expr))
         }
       }
       case Return(value) => {
-        extract(key, context)(value) map {
+        extract(value) map {
           case extr @ Extraction(expr, _) => extr.toStmts ++ List(Return(expr))
         }
       }
@@ -164,8 +151,8 @@ object Flatten {
   }
 
   // applies flatten to every statement in function bodies.
-  def remold(key: Map[String, Location])(global: Global): Either[CutError, Global] = global match {
-    case FuncDecl(loc, typ, name, params, body) => flatten(key, loc)(body) map {
+  def remold(global: Global): Either[CutError, Global] = global match {
+    case FuncDecl(loc, typ, name, params, body) => flatten(body) map {
       ls => { FuncDecl(loc, typ, name, params, Block(ls)) }
     }
     case GlobalDecl(loc, to, typ, from) => Right(GlobalDecl(loc, to, typ, from))
