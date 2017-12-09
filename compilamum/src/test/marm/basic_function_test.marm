@@ -1,8 +1,8 @@
 frontend x: Number = 1 + 2;
 frontend y: Number = x + 2;
-backend z: Number = x + 2;
+backend z: Number = 2;
 
 frontend foo(a: Number, b: Number): Void {
   print(x + y + a + b);
-  print(7 - 8);
+  7 - 8;
 }

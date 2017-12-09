@@ -5,40 +5,25 @@ import org.scalatest._
 
 class TypecheckSpec extends FlatSpec with Matchers {
   "TypecheckExpr" should "allow constant expressions" in {
-    Typecheck.TypecheckExpr(ConstString("Hello world!")) should be (Right(Str()))
-    Typecheck.TypecheckExpr(ConstFloat(1.0)) should be (Right(Num()))
-    Typecheck.TypecheckExpr(ConstBool(true)) should be (Right(Bool()))
+    Typecheck.typecheckExpr(ConstString("Hello world!"), Map()) should be (Right(Str()))
+    Typecheck.typecheckExpr(ConstFloat(1.0), Map()) should be (Right(Num()))
+    Typecheck.typecheckExpr(ConstBool(true), Map()) should be (Right(Bool()))
   }
 
   it should "allow valid binary expressions" in {
-    Typecheck.TypecheckExpr(Bop(Minus(), ConstFloat(1.0), ConstFloat(1.0))) should be (Right(Num())))
+    Typecheck.typecheckExpr(Bop(Minus(), ConstFloat(1.0), ConstFloat(1.0)),Map()) should be (Right(Num()))
   }
 
   it should "disallow invalid binary expressions" in {
-    Typecheck(Bop(Minus(), ConstFloat(1.0), ConstBool(false))) shouldBe a[Left[TypeError,_]]
-    Typecheck(Bop(Plus(), ConstBool(true), ConstString("asdf"))) shouldBe a[Left[TypeError,_]]
+    Typecheck.typecheckExpr(Bop(Minus(), ConstFloat(1.0), ConstBool(false)),Map()) shouldBe a [Left[TypeError,_]]
+    Typecheck.typecheckExpr(Bop(Plus(), ConstBool(true), ConstString("asdf")),Map()) shouldBe a [Left[TypeError,_]]
   }
-  /*
-  it should "handle function type checking" in {
-    val prog = Program(
-      [
-        FuncDecl(
-          Frontend(), 
-          Num(), 
-          "main", 
-          Map("arg1"->Bool()), 
-          Discard(
-            Call(
-              "main", 
-              [
-                ConstBool(false)
-              ]
-            )
-          )
-        )
-      ]
-    )
-    Typecheck(prog) should be (prog)
+
+  it should "allow variables" in {
+    Typecheck.typecheckStmt(Block(List(Declare("x", Num(), ConstFloat(1.0)), Discard(Bop(Plus(), Name("x"), ConstFloat(1.0))))),Map()) should be (Right(true))
   }
-    */
+
+  it should "disallow mismatched variable types" in {
+    Typecheck.typecheckStmt(Block(List(Declare("x", Num(), ConstFloat(1.0)), Declare("y", Bool(), ConstBool(false)), Discard(Bop(Plus(), Name("x"), Name("y"))))),Map()) shouldBe a [Left[TypeError,_]]
+  }
 }

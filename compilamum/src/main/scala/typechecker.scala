@@ -1,57 +1,44 @@
 package typechecker
 
 import compilamum.Erramum
+import runtime.{Runtime}
 import ast._
 
 object Typecheck {
   def apply(prog : Program): Either[TypeError, Program] = prog match {
     case Program(globals) => {
-      val env = globals.fold(Map()){{globe,env} => 
+      val env:Map[String,Typ] = globals.foldLeft(Map[String,Typ]()){(env,globe) => 
         globe match {
-          case FuncDecl(_,typ,name,params,_) => env + (name -> FuncType(params,typ))
+          case FuncDecl(_,typ,name,params,_) => env + (name -> FuncType(params map {case (name,typ) => typ},typ))
           case GlobalDecl(_,name,typ,_) => env + (name -> typ)
-          case Import(_,typ,name,params,_) => env + (name -> FuncType(params,typ))
+          case Import(_,typ,name,params,_) => env + (name -> FuncType(params map {case (name,typ) => typ},typ))
         }
       }
-      def helper(globes:List[Global]):Either[TypeError, Program] = globes match {
+      def helper(globes:List[Global]):Either[TypeError, Boolean] = globes match {
         case Nil => Right(true)
         case globe :: tail => globe match {
           case FuncDecl(_,typ,_,params,stmt) => {
-            val env = params.fold(env){{param,env
+            val env2 = params.foldLeft(env){(envt,param) =>
+              ???
+            }
+            ???
           }
-          case GlobalDecl(_,_,typ,stmt) => 
+          case GlobalDecl(_,_,typ,stmt) => ???
           case Import(_,_,_,_,_) => helper(tail)
         }
       }
-      helper(globals)
+      helper(globals) match {
+        case Right(true) => Right(prog)
+        case Right(false) => Left(TypeError("Typecheck failed for unknown reason"))
+        case Left(err) => Left(err)
+      }
     }
   }
-  
-  /*
-  
-abstract class Typ extends Node
-case class Str() extends Typ
-case class Num() extends Typ
-case class Bool() extends Typ
-case class Ls() extends Typ
-case class Dict() extends Typ
-case class Void() extends Typ
-case class Any() extends Typ
-case class FuncType(args: List[Typ], ret: Typ) extends Typ
-  
-case class FuncDecl(loc: Location, typ: Typ, name: String, params: Map[String,Typ], body: Stmt) extends Global
-case class GlobalDecl(loc: Location, to: String, typ: Typ, from: Expr) extends Global
-case class Import(loc: Location, jsCode: String, name: String, params: Map[String,Typ]) extends Global
-  typecheckProgram(tree, Map()) match {
-    case err @ Left(_) => err
-    case _ => Right(tree)
-  }
-  */
   def typecheckStmt(n: Stmt, env: Map[String,Typ]): Either[TypeError,Boolean] = n match {
-    ???
+    case _ => ???
   }
-  def typecheckGlobal(n:Global,env:[String, Typ]): Either[TypeError, Boolean] = n match {
-    ???
+  def typecheckGlobal(n:Global,env:Map[String, Typ]): Either[TypeError, Boolean] = n match {
+    case _ => ???
   }
   def typecheckExpr(n: Node, env: Map[String,Typ]): Either[TypeError,Typ] = n match {
     case Name(x) => if (env contains x) Right(env(x)) else Left(TypeError(s"Undefined variable: $x"))
