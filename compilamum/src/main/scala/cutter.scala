@@ -31,8 +31,12 @@ object Cut {
     case _ => throw new IllegalArgumentException("The argument to classify must be a Program");
   }
   
-  def cutStmts(nodes: List[Stmt]): List[List[Stmt]] = nodes.foldLeft(List(List() : List[Stmt]): List[List[Stmt]]) {
+  def cutStmts(nodes: List[Stmt]): List[List[Stmt]] = nodes.foldLeft(List(List()): List[List[Stmt]]) {
     case (acc, curr: CallStmt) => acc.init :+ (acc.last :+ curr) :+ List()
+    case (acc, Block(ls)) => {
+      val newls = cutStmts(ls)
+      (acc.init :+ (acc.last ++ newls.head)) ++ newls.tail
+    }
     case (acc, curr) => acc.init :+ (acc.last :+ curr)
   }
   
@@ -41,6 +45,7 @@ object Cut {
       case Block(body) => cutStmts(body)
       case single => cutStmts(List(single))
     }).foldLeft(List(): List[Global]) {
+      case (ls, List()) => ls
       case (ls, stmts) => {
         val new_stmts = (stmts.init :+ ((stmts.last) match {
           case CallStmt(to, func, args, cached, _) => CallStmt(to, func, args, cached, name ++ ls.length.toString + 1)
