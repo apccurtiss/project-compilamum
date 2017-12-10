@@ -22,6 +22,28 @@ object JSONParse extends RuntimeObject {
   def code = "function JSONParse(x) { JSON.parse(x); }\n";
 }
 
+object GetBackendFunction extends RuntimeObject {
+  def export = Some(("get_backend_function"), FuncType(List(Str()), Void()));
+  def code = """
+function get_backend_function(f) {
+  return () => {
+    xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("POST","/call", true);
+    xmlhttp.onreadystatechange=function(){
+       if (xmlhttp.readyState == 4 && xmlhttp.status == 200){
+         console.log(xmlhttp.responseText);
+       }
+    }
+    data = {
+      func: f,
+      args: Array.prototype.slice.call(arguments, 1),
+    }
+    xmlhttp.send(JSON.stringify(data));
+  }
+}
+""";
+}
+
 object Serve extends RuntimeObject {
   def export = None
   def code = """
@@ -33,6 +55,20 @@ require('http').createServer(function (request, response) {
 
   try {
     const requestUrl = url.parse(request.url)
+
+    if (request.method == "POST" && requestUrl.pathname == "/call") {
+      var data = '';
+      request.on('data', function(chunk) {
+        data += chunk;
+      });
+      request.on('end', function() {
+        data = JSON.parse(data);
+        response.writeHead(200, { 'Content-Type': 'application/json' });
+        response.end(JSON.stringify(funcs[data.func].apply(this, data.args)));
+      });
+      return;
+    }
+
     var fsPath = baseDirectory+path.normalize(requestUrl.pathname)
     if (fsPath.endsWith("/") || fsPath.endsWith("\\")) {
       fsPath += "index.html"
@@ -52,10 +88,11 @@ require('http').createServer(function (request, response) {
     response.end()
     console.log(e.stack)
   }
-}).listen(1234)"""
+}).listen(1234);
+""";
 }
 
 object Runtime {
-  def client: List[RuntimeObject] = List(Print, JSONParse, Alert);
+  def client: List[RuntimeObject] = List(Print, JSONParse, Alert, GetBackendFunction);
   def server: List[RuntimeObject] = List(Print, JSONParse, Serve);
 }
