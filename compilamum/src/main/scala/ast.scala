@@ -39,6 +39,7 @@ case class Bop(op: Op, left: Expr, right: Expr) extends Expr
 case class Uop(op: Op, expr: Expr) extends Expr
 case class ListExpr(items: List[Expr]) extends Expr
 case class DictExpr(items: Map[Expr, Expr]) extends Expr
+// case class Subscript(expr: Expr, sub: String) extends Expr
 
 abstract class Literal extends Expr
 case class Name(id: String) extends Literal

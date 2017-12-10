@@ -6,3 +6,9 @@ frontend foo(a: Number, b: Number): Void {
   print(x + y + a + b);
   7 - 8;
 }
+
+backend verifyUserInfo(name: String, pass: String): Boolean {
+  let users: String = read("users.json");
+  let userDict: Dictionary = JSONParse(users);
+  return userDict[name] == pass;
+}

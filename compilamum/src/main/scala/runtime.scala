@@ -17,23 +17,26 @@ object Alert extends RuntimeObject {
   def code = "function popup(x) { alert(x); }\n";
 }
 
+object JSONParse extends RuntimeObject {
+  def export = Some(("JSONParse", FuncType(List(Str()), Void())));
+  def code = "function JSONParse(x) { JSON.parse(x); }\n";
+}
+
 object Serve extends RuntimeObject {
   def export = None
   def code = """
-const http = require('http')
-const url = require('url')
-const fs = require('fs')
-const path = require('path')
-const baseDirectory = __dirname
+require('http').createServer(function (request, response) {
+  const url = require('url')
+  const fs = require('fs')
+  const path = require('path')
+  const baseDirectory = __dirname
 
-http.createServer(function (request, response) {
   try {
     const requestUrl = url.parse(request.url)
     var fsPath = baseDirectory+path.normalize(requestUrl.pathname)
     if (fsPath.endsWith("/") || fsPath.endsWith("\\")) {
       fsPath += "index.html"
     }
-    console.log(fsPath)
 
     var fileStream = fs.createReadStream(fsPath)
     fileStream.pipe(response)
@@ -49,11 +52,10 @@ http.createServer(function (request, response) {
     response.end()
     console.log(e.stack)
   }
-}).listen(1234)
-  """
+}).listen(1234)"""
 }
 
 object Runtime {
-  def client: List[RuntimeObject] = List(Print, Alert);
-  def server: List[RuntimeObject] = List(Print, Serve);
+  def client: List[RuntimeObject] = List(Print, JSONParse, Alert);
+  def server: List[RuntimeObject] = List(Print, JSONParse, Serve);
 }

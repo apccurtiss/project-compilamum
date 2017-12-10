@@ -123,6 +123,10 @@ object Parse extends RegexParsers {
 
   def dict: Parser[Expr] = ???
 
+  // def subscript: Parser[Expr] = expr ~ ("." ~> "[a-zA-Z][a-zA-Z0-9]+") ^^ {
+  //     case expr ~ sub => Subscript(expr, sub)
+  // }
+
   def equalOp: Parser[Expr] = ???
 
   def boolOp: Parser[Expr] = ???
