@@ -37,7 +37,7 @@ object Cache {
 
     case Block(body) => (body reverse).foldLeft( UseCounter(used_before, Block(List())) ) {
       case (UseCounter(before, Block(ls)), current) => count(before, current) map {
-        s => Block(ls ++ List(s))
+        s => Block(List(s) ++ ls)
       }
     }
     case While(condition, body) => ??? // HONESTLY I HAVE NO IDEA HOW TO WRITE THIS??
