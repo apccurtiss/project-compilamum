@@ -157,8 +157,8 @@ object Parse extends RegexParsers {
 
   def args: Parser[List[Expr]] = ???
 
-  def params: Parser[Map[String,Typ]] = repsep(name ~ (":" ~> typ), ",") ^^ {
-    case p => p map { case Name(id) ~ t => (id, t) } toMap
+  def params: Parser[List[(String,Typ)]] = repsep(name ~ (":" ~> typ), ",") ^^ {
+    case p => p map { case Name(id) ~ t => (id, t) }
   }
 
   def name: Parser[Name] = not(keyword) ~> "[\\w_][\\w_\\d]*".r ^^ Name

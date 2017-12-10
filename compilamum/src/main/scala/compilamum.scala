@@ -47,9 +47,13 @@ object Compile {
   def apply(code: String): Either[Erramum, (String, String)] = {
     for {
       ast <- Parse(code)
+      _ = println(ast)
       checked_ast <- Typecheck(ast)
+      _ = println(checked_ast)
       pair <- Cut(checked_ast)
       (client, server) = pair
+      _ = println(client)
+      _ = println(server)
       client_out <- Generate(client, Runtime.client)
       server_out <- Generate(server, Runtime.server)
     } yield (client_out, server_out)

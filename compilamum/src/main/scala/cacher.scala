@@ -30,9 +30,9 @@ object Cache {
   // Not aware of globals right now. Also cannot handle while loops.
   def count(used_before: Set[String], node: Stmt): UseCounter = node match {
     case Declare(s, t, from) => UseCounter(used_before - s ++ used_vars(from), node)
-    case NetCall(to, func, args, _) => UseCounter(
+    case CallStmt(to, func, args, _, _) => UseCounter(
       used_before - to ++ (args.toSet flatMap used_vars),
-      NetCall(to, func, args, used_before)
+      CallStmt(to, func, args, used_before, "")
     )
 
     case Block(body) => (body reverse).foldLeft( UseCounter(used_before, Block(List())) ) {
