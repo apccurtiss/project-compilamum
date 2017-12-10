@@ -29,7 +29,7 @@ object Generate {
 
     case Call(f, args) => s"${f}(${args map gen mkString(", ")})"
     // case class CallStmt(to: String, func: String, args: List[Expr], cached: Set[String], returnto: String) extends Stmt
-    case CallStmt(to, func, args, cached, ret) => s"var $to = get_backend_function($func)(${args map gen mkString(", ")})"
+    case CallStmt(to, func, args, cached, ret) => s"get_backend_function('$func', ${args map gen mkString(", ")})($ret)"
 
     // TODO(alex) Implement operator precedence
     case Bop(Plus(), e1, e2) => s"(${gen(e1)} + ${gen(e2)})"

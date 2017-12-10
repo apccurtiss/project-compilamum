@@ -7,10 +7,10 @@ import cacher.Cache
 
 object Cut {
   def apply(tree: Node): Either[Erramum, (Node, Node)] = {
-    val key = classify(tree)
+    // val key = classify(tree)
     val flat_tree = Flatten(tree)
     val cached_tree = flat_tree map Cache.apply
-    
+
     cached_tree map {case program =>
       val (client, server) = (program.body flatMap cutGlobal) partition {
         case GlobalDecl(Frontend(), _, _, _) => true
@@ -22,15 +22,15 @@ object Cut {
     }
   }
 
-  def classify(tree: Node): Map[String, Location] = tree match {
-    case Program(globals) => globals map {
-      case GlobalDecl(loc, name, _, _) => (name, loc)
-      case FuncDecl(loc, _, name, _, _) => (name, loc)
-      case Import(loc, _, name, _, _) => (name, loc)
-    } toMap
-    case _ => throw new IllegalArgumentException("The argument to classify must be a Program");
-  }
-  
+  // def classify(tree: Node): Map[String, Location] = tree match {
+  //   case Program(globals) => globals map {
+  //     case GlobalDecl(loc, name, _, _) => (name, loc)
+  //     case FuncDecl(loc, _, name, _, _) => (name, loc)
+  //     case Import(loc, _, name, _, _) => (name, loc)
+  //   } toMap
+  //   case _ => throw new IllegalArgumentException("The argument to classify must be a Program");
+  // }
+
   def cutStmts(nodes: List[Stmt]): List[List[Stmt]] = nodes.foldLeft(List(List()): List[List[Stmt]]) {
     case (acc, curr: CallStmt) => acc.init :+ (acc.last :+ curr) :+ List()
     case (acc, Block(ls)) => {
@@ -39,7 +39,7 @@ object Cut {
     }
     case (acc, curr) => acc.init :+ (acc.last :+ curr)
   }
-  
+
   def cutGlobal(node: Global): List[Global] = node match {
     case FuncDecl(loc, typ, name, params, body) => (body match {
       case Block(body) => cutStmts(body)
@@ -48,10 +48,13 @@ object Cut {
       case (ls, List()) => ls
       case (ls, stmts) => {
         val new_stmts = (stmts.init :+ ((stmts.last) match {
-          case CallStmt(to, func, args, cached, _) => CallStmt(to, func, args, cached, name ++ ls.length.toString + 1)
+          case CallStmt(to, func, args, cached, _) => {
+            CallStmt(to, func, args, cached, name ++ (ls.length + 1).toString)
+          }
           case x => x
         })).toList
-        ls :+ FuncDecl(loc, typ, name ++ ls.length.toString, params, Block(new_stmts))
+        val newname = if (ls.length != 0) name ++ ls.length.toString else name
+        ls :+ FuncDecl(loc, typ, newname, params, Block(new_stmts))
       }
     }
     case x => List(x)

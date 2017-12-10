@@ -26,12 +26,12 @@ object GetBackendFunction extends RuntimeObject {
   def export = Some(("get_backend_function"), FuncType(List(Str()), Void()));
   def code = """
 function get_backend_function(f) {
-  return () => {
+  return (nf) => {
     xmlhttp = new XMLHttpRequest();
     xmlhttp.open("POST","/call", true);
     xmlhttp.onreadystatechange=function(){
        if (xmlhttp.readyState == 4 && xmlhttp.status == 200){
-         console.log(xmlhttp.responseText);
+         nf(JSON.parse(xmlhttp.responseText));
        }
     }
     data = {
@@ -64,7 +64,7 @@ require('http').createServer(function (request, response) {
       request.on('end', function() {
         data = JSON.parse(data);
         response.writeHead(200, { 'Content-Type': 'application/json' });
-        response.end(JSON.stringify(funcs[data.func].apply(this, data.args)));
+        response.end(JSON.stringify(eval(data.func).apply(this, data.args)));
       });
       return;
     }
@@ -88,7 +88,7 @@ require('http').createServer(function (request, response) {
     response.end()
     console.log(e.stack)
   }
-}).listen(1234);
+}).listen(80);
 """;
 }
 

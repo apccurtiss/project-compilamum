@@ -13,7 +13,6 @@ object Flatten {
     }
   }
 
-  // Do I need an abstract class here???
   case class Extraction(oldExpr: Expr, newExprs: LinkedHashMap[String, Expr]) {
     def map(f: Expr => Expr): Extraction = Extraction(f(oldExpr), newExprs)
     def flatMap(f: Expr => Extraction): Extraction = {
@@ -30,22 +29,14 @@ object Flatten {
     }
   }
 
-  // TODO:
-  // THIS IS A HORRID HACK: IZAAK DID THIS
-  // Hey, if someone can figure out how to make this less ugly, please do so!
-  // It takes a list of eithers and returns the first Left in the list, or
-  // a Right of a list of all of the Right values, if there are no Lefts
-  // NOT POSSIBLE: This cannot be made generic, so don't try.
   def swap[A,B](ls: List[Either[A,B]]): Either[A, List[B]] = {
-    if (ls exists {_.isLeft}) {
-      Left(ls.find(_.isLeft).get.left.toOption.get)
-    } else {
-      Right(ls map {_.toOption.get})
+    ls.foldRight(Right(List()): Either[A, List[B]]) {
+      case (h, acc) => acc flatMap { l => h map { n => n :: l } }
     }
   }
 
   // TODO: Make this generic?
-  def mapM[A,B,C](xs:List[A])(f:A=>Either[C,B]) : Either[C, List[B]] = {
+  def mapM[A, B, C](xs: List[A])(f: A => Either[C,B]): Either[C, List[B]] = {
     swap(xs.map(f))
   }
 
@@ -66,6 +57,7 @@ object Flatten {
   // with the replacements, and a mapping from variable name to removed expression.
   def extract(tree: Expr): Either[CutError, Extraction] = {
     tree match {
+      case Call("print", args) => Right(Extraction(tree, LinkedHashMap()))
       case Call(id, args) => {
         val argsres = swap(args map extract) map {_.foldLeft(Extraction(Call(id, List()), LinkedHashMap()))({
           (total_extr, other_extr) => total_extr.combine({
