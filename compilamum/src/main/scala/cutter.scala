@@ -15,7 +15,7 @@ object Cut {
       val (client, server) = (program.body flatMap cutGlobal) partition {
         case GlobalDecl(Frontend(), _, _, _) => true
         case FuncDecl(Frontend(), _, _, _, _) => true
-        case Import(Frontend(), _, _, _) => true
+        case Import(Frontend(), _, _, _, _) => true
         case _ => false
       }
       (Program(client), Program(server))
@@ -26,7 +26,7 @@ object Cut {
     case Program(globals) => globals map {
       case GlobalDecl(loc, name, _, _) => (name, loc)
       case FuncDecl(loc, _, name, _, _) => (name, loc)
-      case Import(loc, _, name, _) => (name, loc)
+      case Import(loc, _, name, _, _) => (name, loc)
     } toMap
     case _ => throw new IllegalArgumentException("The argument to classify must be a Program");
   }

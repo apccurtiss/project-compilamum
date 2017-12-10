@@ -59,9 +59,9 @@ case class Block(body: List[Stmt]) extends Stmt
 case class CallStmt(to: String, func: String, args: List[Expr], cached: Set[String], returnto: String) extends Stmt
 
 abstract class Global extends Node
-case class FuncDecl(loc: Location, typ: Typ, name: String, params: Map[String,Typ], body: Stmt) extends Global
+case class FuncDecl(loc: Location, typ: Typ, name: String, params: List[(String,Typ)], body: Stmt) extends Global
 case class GlobalDecl(loc: Location, to: String, typ: Typ, from: Expr) extends Global
-case class Import(loc: Location, jsCode: String, name: String, params: Map[String,Typ]) extends Global
+case class Import(loc: Location, typ:Typ, name: String, params: List[(String,Typ)], jsCode: String) extends Global
 
 // and there's the program over all:
 case class Program(body: List[Global]) extends Node

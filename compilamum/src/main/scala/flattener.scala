@@ -156,6 +156,6 @@ object Flatten {
       ls => { FuncDecl(loc, typ, name, params, Block(ls)) }
     }
     case GlobalDecl(loc, to, typ, from) => Right(GlobalDecl(loc, to, typ, from))
-    case Import(loc, jsCode, name, params) => Right(Import(loc, jsCode, name, params))
+    case Import(loc, typ, name, params, jsCode) => Right(Import(loc, typ, name, params, jsCode))
   }
 }

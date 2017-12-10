@@ -3,7 +3,7 @@
 
 <Global> ::= <GlobalDecl> | <ImportStmt> | <Function>
 <GlobalDecl> ::= <Location> <Name> ":" <Typ> "=" <Expr> ";"
-<ImportStmt> ::= "import" <Location> <Javascript> "as" <Name> "(" <Params> ")" ";"
+<ImportStmt> ::= "import" <Location> <Javascript> "as" <Name> "(" <Params> ")" ":" <Typ>";"
 <Function> ::= <Location> <Typ> <Name> "(" <Params> ")" ":" <Typ> <Stmt>
 <Locaiton> ::= "front" | "back"
 
