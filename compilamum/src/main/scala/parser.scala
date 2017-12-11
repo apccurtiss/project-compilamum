@@ -32,13 +32,15 @@ object Parse extends RegexParsers {
   // GLOBAL //
   ////////////
 
-  def global: Parser[Program] = rep(function | globalDecl) ^^ Program
+  def global: Parser[Program] = rep(function | globalDecl | importStmt) ^^ Program
 
   def globalDecl: Parser[GlobalDecl] = location ~ name ~ (":" ~> typ) ~ ("=" ~> expr <~ semi) ^^ {
     case loc ~ Name(x) ~ typ ~ expr => GlobalDecl(loc, x, typ, expr)
   }
 
-  def importStmt: Parser[Global] = ???
+  def importStmt: Parser[Global] = (location <~ "javascript") ~ string ~ ("as" ~> name) ~ ("(" ~> params <~ ")") ~ (":" ~> typ) ^^ {
+    case loc ~ ConstString(code) ~ Name(x) ~ p ~ t => Import(loc, t, x, p, code)
+  }
 
   def function: Parser[GlobalFuncDecl] = location ~ name ~ ("(" ~> params <~ ")") ~ (":" ~> typ) ~ stmt ^^ {
     case l ~ Name(id) ~ p ~ t ~ b => GlobalFuncDecl(l, t, id, p, b)
