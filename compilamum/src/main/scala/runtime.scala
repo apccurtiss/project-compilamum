@@ -31,7 +31,12 @@ function get_backend_function(f) {
     xmlhttp.open("POST","/call", true);
     xmlhttp.onreadystatechange=function(){
        if (xmlhttp.readyState == 4 && xmlhttp.status == 200){
-         nf(JSON.parse(xmlhttp.responseText));
+         if (xmlhttp.responseText === "") {
+             nf()
+         } {
+             nf(JSON.parse(xmlhttp.responseText));
+         }
+         
        }
     }
     data = {

@@ -9,7 +9,13 @@ import ast._
 object Flatten {
   def apply(tree: Node): Either[CutError, Program] = tree match {
     case Program(globals) => {
-      swap(globals map remold) map Program
+      val ignore = ((globals filter {
+        case _: Import => true
+        case _ => false
+      }) map {
+        case Import(_,_,name,_,_) => name
+      }).toSet + "print"
+      swap(globals map {x => remold(x, ignore)}) map Program
     }
   }
 
@@ -47,12 +53,12 @@ object Flatten {
   // Extracts all call nodes with different locations from the current context
   // and replaces them with a variable name. Then, it returns the new expression
   // with the replacements, and a mapping from variable name to removed expression.
-  def extract(tree: Expr): Either[CutError, Extraction] = {
+  def extract(tree: Expr, ignore: Set[String]): Either[CutError, Extraction] = {
+    val recurse = extract(_:Expr, ignore)
     tree match {
-      case Call("print", args) => Right(Extraction(tree, LinkedHashMap()))
-
+      case Call(id, args) if ignore contains id => Right(Extraction(tree, LinkedHashMap()))
       case Call(id, args) => {
-        val argsres = swap(args map extract) map {
+        val argsres = swap(args map recurse) map {
           _.foldLeft(Extraction(Call(id, List()), LinkedHashMap())){
             (total_extr, other_extr) => total_extr.combine {
               case (Call(x, args), other) => Call(x, other :: args)
@@ -71,7 +77,7 @@ object Flatten {
         }
       }
 
-      case ListExpr(items) => swap(items map extract) map {
+      case ListExpr(items) => swap(items map recurse) map {
         _.reduce {
           (total_extr, other_extr) => total_extr.combine {
             case (ListExpr(items), other) => ListExpr(other::items)
@@ -82,10 +88,10 @@ object Flatten {
       case DictExpr(items) => ???
 
       case Bop(op, left, right) => for {
-        left <- extract(left)
-        right <- extract(right)
+        left <- recurse(left)
+        right <- recurse(right)
       } yield (Extraction(Bop(op, left.oldExpr, right.oldExpr), left.newExprs ++ right.newExprs))
-      case Uop(op, expr) => extract(expr) map { _ map { Uop(op, _) } }
+      case Uop(op, expr) => recurse(expr) map { _ map { Uop(op, _) } }
 
       case Name(id) => Right(Extraction(tree, LinkedHashMap()))
       case _ => Right(Extraction(tree, LinkedHashMap()))
@@ -98,45 +104,46 @@ object Flatten {
   // calls itself on any stmts that the stmt itself contains.
   //
   // TODO: Consider replacing Map with just a list os statements containg the assignments?
-  def flatten(stmt: Stmt): Either[CutError, List[Stmt]] = {
+  def flatten(stmt: Stmt, ignore: Set[String]): Either[CutError, List[Stmt]] = {
+    val recurse = flatten(_:Stmt, ignore)
     stmt match {
-      case If(condition, body, orelse) => flatten(body) flatMap {
-        new_body => flatten(orelse) flatMap {
+      case If(condition, body, orelse) => recurse(body) flatMap {
+        new_body => recurse(orelse) flatMap {
           new_else => {
-            extract(condition) map {
+            extract(condition, ignore) map {
               case extr @ Extraction(expr, _) => extr.toStmts ++ List(If(expr, Block(new_body), Block(new_else)))
             }
           }
         }
       }
 
-      case While(condition, body) => flatten(body) flatMap {
+      case While(condition, body) => recurse(body) flatMap {
         new_body => {
-          extract(condition) map {
+          extract(condition, ignore) map {
             case extr @ Extraction(expr, _) => extr.toStmts ++ List(While(expr, Block(new_body)))
           }
         }
       }
 
-      case Block(body) => swap(body map flatten) map (_.flatten)
+      case Block(body) => swap(body map recurse) map (_.flatten)
 
       case Declare(to, typ, from) => {
-        extract(from) map {
+        extract(from, ignore) map {
           case extr @ Extraction(expr, _) => extr.toStmts ++ List(Declare(to, typ, expr))
         }
       }
       case Assign(to, from) => {
-        extract(from) map {
+        extract(from, ignore) map {
           case extr @ Extraction(expr, _) => extr.toStmts ++ List(Assign(to, expr))
         }
       }
       case Discard(value) => {
-        extract(value) map {
+        extract(value, ignore) map {
           case extr @ Extraction(expr, _) => extr.toStmts ++ List(Discard(expr))
         }
       }
       case Return(value) => {
-        extract(value) map {
+        extract(value, ignore) map {
           case extr @ Extraction(expr, _) => extr.toStmts ++ List(Return(expr))
         }
       }
@@ -146,8 +153,8 @@ object Flatten {
   }
 
   // applies flatten to every statement in function bodies.
-  def remold(global: Global): Either[CutError, Global] = global match {
-    case GlobalFuncDecl(loc, typ, name, params, body) => flatten(body) map {
+  def remold(global: Global, ignore: Set[String]): Either[CutError, Global] = global match {
+    case GlobalFuncDecl(loc, typ, name, params, body) => flatten(body, ignore) map {
       ls => { GlobalFuncDecl(loc, typ, name, params, Block(ls)) }
     }
     case x => Right(x)

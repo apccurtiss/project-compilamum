@@ -21,6 +21,7 @@ object Generate {
     case GlobalFuncDecl(_, _, name, params, body) => {
       s"function $name(${params map(_._1) mkString(", ")}) {\n${gen(body)}\n}"
     }
+    case Import(_, _, name, _, jsCode) => s"var $name = $jsCode"
 
 
     case FuncDecl(_, name, params, body) => {
