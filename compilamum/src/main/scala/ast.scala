@@ -7,7 +7,7 @@ abstract class Location extends Node
 case class Backend() extends Location
 case class Frontend() extends Location
 
-abstract class Typ extends Node
+abstract class Typ
 case class Str() extends Typ
 case class Num() extends Typ
 case class Bool() extends Typ
