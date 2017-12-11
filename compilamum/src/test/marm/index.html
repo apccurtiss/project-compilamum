@@ -6,9 +6,10 @@
   <title>Example Webpage</title>
 
   <link rel="stylesheet" href="style.css"/>
-  <script src="basic_function_test-client.js"></script>
+  <script src="view_counter-client.js"></script>
 </head>
-<body>
-  <div id="counter">Number of page loads: 10</div>
+<body onload="javascript:pageload()">
+  <div id="text"><i>Number of times this page has been loaded:<i></div>
+  <div id="counter">Loading...</div>
 </body>
 </html>

@@ -1,0 +1,18 @@
+frontend javascript "(id, str) => {document.getElementById(id).innerHTML = str}" as set(id: String, val: String): Void
+
+frontend pageload(): Void {
+  increment();
+  let x: Number = getcounter();
+  set("counter", x);
+}
+
+backend increment(): Void {
+  counter = counter + 1;
+  print(counter);
+}
+
+backend counter: Number = 0;
+
+backend getcounter(): Number {
+  return counter;
+}

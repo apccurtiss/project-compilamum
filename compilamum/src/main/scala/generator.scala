@@ -21,6 +21,7 @@ object Generate {
     case GlobalFuncDecl(_, _, name, params, body) => {
       s"function $name(${params map(_._1) mkString(", ")}) {\n${gen(body)}\n}"
     }
+    case Import(_, _, name, _, jsCode) => s"var $name = $jsCode"
 
 
     case FuncDecl(_, name, params, body) => {
@@ -28,7 +29,8 @@ object Generate {
     }
     case Block(stmts) => stmts map { line => s"${gen(line)};" } mkString("\n")
     case Discard(stmt) => gen(stmt)
-    case Assign(x, v) => s"var $x = ${gen(v)}"
+    case Declare(x, _, v) => s"var $x = ${gen(v)}"
+    case Assign(x, v) => s"$x = ${gen(v)}"
     case Return(expr) => s"return ${gen(expr)}"
 
     case Call(f, args) => s"${f}(${args map gen mkString(", ")})"

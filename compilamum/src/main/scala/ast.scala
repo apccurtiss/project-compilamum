@@ -7,7 +7,7 @@ abstract class Location extends Node
 case class Backend() extends Location
 case class Frontend() extends Location
 
-abstract class Typ extends Node
+abstract class Typ
 case class Str() extends Typ
 case class Num() extends Typ
 case class Bool() extends Typ
@@ -63,7 +63,7 @@ case class CallStmt(to: String, func: String, args: List[Expr], cached: Set[Stri
 abstract class Global extends Node
 case class GlobalFuncDecl(loc: Location, typ: Typ, name: String, params: List[(String,Typ)], body: Stmt) extends Global
 case class GlobalDecl(loc: Location, to: String, typ: Typ, from: Expr) extends Global
-case class Import(loc: Location, typ:Typ, name: String, params: List[(String,Typ)], jsCode: String) extends Global
+case class Import(loc: Location, typ: Typ, name: String, params: List[(String,Typ)], jsCode: String) extends Global
 
 // and there's the program over all:
 case class Program(body: List[Global]) extends Node
