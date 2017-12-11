@@ -9,7 +9,7 @@ object Typecheck {
     case Program(globals) => {
       val env:Map[String,Typ] = globals.foldLeft(Map[String,Typ]()){(env,globe) => 
         globe match {
-          case FuncDecl(_,typ,name,params,_) => env + (name -> FuncType(params map {case (name,typ) => typ},typ))
+          case GlobalFuncDecl(_,typ,name,params,_) => env + (name -> FuncType(params map {case (name,typ) => typ},typ))
           case GlobalDecl(_,name,typ,_) => env + (name -> typ)
           case Import(_,typ,name,params,_) => env + (name -> FuncType(params map {case (name,typ) => typ},typ))
         }
@@ -30,7 +30,7 @@ object Typecheck {
     }
   }
   def typecheckGlobal(n:Global,env:Map[String, Typ]): Either[TypeError, Boolean] = n match {
-    case FuncDecl(_,typ,_,params,stmt) => {
+    case GlobalFuncDecl(_,typ,_,params,stmt) => {
       val env2 = params.foldLeft(env){case (envTmp,(name,typ)) =>
         envTmp + (name -> typ)
       }

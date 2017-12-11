@@ -1,8 +1,14 @@
 <html>
-<script src="basic_function_test-client.js"></script>
-<body>
-  <p>
-    Hello, world!
-  </p>
+<script src="view_counter-client.js"></script>
+<body onload="javascript:pageload()">
+  <form action="javascript:click()">
+    First name:<br>
+    <input type="text" name="firstname" value="Mickey">
+    <br>
+    Last name:<br>
+    <input type="text" name="lastname" value="Mouse">
+    <br><br>
+    <input type="submit" value="Submit">
+  </form>
 </body>
 </html>

@@ -20,10 +20,16 @@ class TypecheckSpec extends FlatSpec with Matchers {
   }
 
   it should "allow variables" in {
-    Typecheck.typecheckStmt(Block(List(Declare("x", Num(), ConstFloat(1.0)), Discard(Bop(Plus(), Name("x"), ConstFloat(1.0))))),Map()) should be (Right(true))
+    val res = Typecheck.typecheckStmt(
+      Block(List(Declare("x", Num(), ConstFloat(1.0)), Discard(Bop(Plus(), Name("x"), ConstFloat(1.0))))),Map()
+    )
+    println(res)
+    res should be (Right(Void()))
   }
 
   it should "disallow mismatched variable types" in {
-    Typecheck.typecheckStmt(Block(List(Declare("x", Num(), ConstFloat(1.0)), Declare("y", Bool(), ConstBool(false)), Discard(Bop(Plus(), Name("x"), Name("y"))))),Map()) shouldBe a [Left[TypeError,_]]
+    Typecheck.typecheckStmt(
+      Block(List(Declare("x", Num(), ConstFloat(1.0)), Declare("y", Bool(), ConstBool(false)), Discard(Bop(Plus(), Name("x"), Name("y"))))),Map()
+    ) shouldBe a [Left[TypeError,_]]
   }
 }

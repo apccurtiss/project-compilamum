@@ -18,14 +18,23 @@ object Generate {
     case Program(lines) => lines map gen mkString("\n")
 
     case GlobalDecl(_, name, _, value) => s"var $name = ${gen(value)};"
-    case FuncDecl(_, _, name, params, body) => {
+    case GlobalFuncDecl(_, _, name, params, body) => {
       s"function $name(${params map(_._1) mkString(", ")}) {\n${gen(body)}\n}"
     }
 
-    case Block(stmts) => stmts map gen map { line => s"$line;" } mkString("\n")
+
+    case FuncDecl(_, name, params, body) => {
+      s"function $name(${params map(_._1) mkString(", ")}) {\n${gen(body)}\n}"
+    }
+    case Block(stmts) => stmts map { line => s"${gen(line)};" } mkString("\n")
     case Discard(stmt) => gen(stmt)
+    case Declare(x, _, v) => s"var $x = ${gen(v)}"
+    case Assign(x, v) => s"$x = ${gen(v)}"
+    case Return(expr) => s"return ${gen(expr)}"
 
     case Call(f, args) => s"${f}(${args map gen mkString(", ")})"
+    // case class CallStmt(to: String, func: String, args: List[Expr], cached: Set[String], returnto: String) extends Stmt
+    case CallStmt(to, func, args, cached, ret) => s"return get_backend_function('$func', ${args map gen mkString(", ")})($ret)"
 
     // TODO(alex) Implement operator precedence
     case Bop(Plus(), e1, e2) => s"(${gen(e1)} + ${gen(e2)})"
