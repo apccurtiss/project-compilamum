@@ -1,0 +1,18 @@
+frontend pageload(): Void {
+  increment();
+}
+
+frontend click(): Void {
+  let x: Number = getcounter();
+  print(x);
+}
+
+backend increment(): Void {
+  counter = counter + 1;
+}
+
+backend counter: Number = 0;
+
+backend getcounter(): Number {
+  return counter;
+}
