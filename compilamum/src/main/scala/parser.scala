@@ -40,8 +40,8 @@ object Parse extends RegexParsers {
 
   def importStmt: Parser[Global] = ???
 
-  def function: Parser[FuncDecl] = location ~ name ~ ("(" ~> params <~ ")") ~ (":" ~> typ) ~ stmt ^^ {
-    case l ~ Name(id) ~ p ~ t ~ b => FuncDecl(l, t, id, p, b)
+  def function: Parser[GlobalFuncDecl] = location ~ name ~ ("(" ~> params <~ ")") ~ (":" ~> typ) ~ stmt ^^ {
+    case l ~ Name(id) ~ p ~ t ~ b => GlobalFuncDecl(l, t, id, p, b)
   }
 
   def location: Parser[Location] = ("frontend" ^^^ Frontend()) | ("backend" ^^^ Backend())

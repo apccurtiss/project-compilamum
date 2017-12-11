@@ -15,7 +15,7 @@ object Typecheck {
       // }
       // val env: Map[String, Typ] = globals.foldLeft(Map[String, Typ]()) {
       //   (env,globe) => globe match {
-      //     case FuncDecl(_,typ,name,params,_) => env + (name -> FuncType(params map { case (name,typ) => typ }, typ))
+      //     case GlobalFuncDecl(_,typ,name,params,_) => env + (name -> FuncType(params map { case (name,typ) => typ }, typ))
       //     case GlobalDecl(_,name,typ,_) => env + (name -> typ)
       //     case Import(_,typ,name,params,_) => env + (name -> FuncType(params map { case (name,typ) => typ }, typ))
       //   }
@@ -24,7 +24,7 @@ object Typecheck {
       // def helper(globes: List[Global]): Either[TypeError, Boolean] = globes match {
       //   case Nil => Right(true)
       //   case globe :: tail => globe match {
-      //     case FuncDecl(_, typ, _, params, stmt) => {
+      //     case GlobalFuncDecl(_, typ, _, params, stmt) => {
       //       val env2 = env ++ params
       //       ???
       //     }
@@ -46,7 +46,7 @@ object Typecheck {
   }
 
   def typecheckGlobal(n: Global, env: Map[String, Typ]): Either[TypeError, Boolean] = n match {
-    case FuncDecl(_, typ, _, params, body) => typecheckStmt(body, env ++ params) flatMap {
+    case GlobalFuncDecl(_, typ, _, params, body) => typecheckStmt(body, env ++ params) flatMap {
       // case `typ` => Right()
       case badtyp => Left(TypeError(s"Expected type $typ, got $badtyp"))
     }
@@ -152,7 +152,7 @@ case class Block(body: List[Stmt]) extends Stmt
 case class NetCall(to: String, func: String, args: List[Expr], cached: Set[String]) extends Stmt
 
 abstract class Global extends Node
-case class FuncDecl(loc: Location, typ: Typ, name: String, params: Map[String,Typ], body: Stmt) extends Global
+case class GlobalFuncDecl(loc: Location, typ: Typ, name: String, params: Map[String,Typ], body: Stmt) extends Global
 case class GlobalDecl(loc: Location, to: String, typ: Typ, from: Expr) extends Global
 case class Import(loc: Location, jsCode: String, name: String, params: Map[String,Typ]) extends Global
 

@@ -35,20 +35,12 @@ object Flatten {
     }
   }
 
-  // TODO: Make this generic?
-  def mapM[A, B, C](xs: List[A])(f: A => Either[C,B]): Either[C, List[B]] = {
-    swap(xs.map(f))
-  }
-
-  // TODO: Make this generic?
   def map2[A](arg: Either[A, Extraction])(f: Expr => Expr): Either[A, Extraction] = {
     arg map (_ map f)
   }
 
-  // Yo, this is a hack to avoid passing around an explicit counter
-  // or wrapping everything in yet another monad. HELP!
-  val gen = new Random(13)
   def genname(): String = {
+    val gen = new Random(13)
     gen.alphanumeric.take(10).foldLeft("")((t, o) => {t :+ o})
   }
 
@@ -58,31 +50,42 @@ object Flatten {
   def extract(tree: Expr): Either[CutError, Extraction] = {
     tree match {
       case Call("print", args) => Right(Extraction(tree, LinkedHashMap()))
-      case Call(id, args) => {
-        val argsres = swap(args map extract) map {_.foldLeft(Extraction(Call(id, List()), LinkedHashMap()))({
-          (total_extr, other_extr) => total_extr.combine({
-            case (Call(x, args), other) => Call(x, other::args)
-            case (_, _) => throw new IllegalArgumentException("Don't change the intial value for foldLeft, idiot!")
-          })( other_extr )
-        })}
 
-        argsres map {_ flatMap {
-          tree => val r = genname(); Extraction(Name("__cut_tmp_"++r), LinkedHashMap(("__cut_tmp_var__"++r, tree)))
-        }}
+      case Call(id, args) => {
+        val argsres = swap(args map extract) map {
+          _.foldLeft(Extraction(Call(id, List()), LinkedHashMap())){
+            (total_extr, other_extr) => total_extr.combine {
+              case (Call(x, args), other) => Call(x, other :: args)
+              case (x, _) => throw new IllegalArgumentException(s"Expected Call, got $x")
+            }(other_extr)
+          }
+        }
+
+        argsres map {
+          _ flatMap {
+            tree => {
+              val name = "asdf"
+              Extraction(Name(name), LinkedHashMap((name, tree)))
+            }
+          }
+        }
       }
-      case ListExpr(items) => swap(items map extract) map {_.reduce({
-        (total_extr, other_extr) => total_extr.combine({
-          case (ListExpr(items), other) => ListExpr(other::items)
-          case (start, other) => ListExpr(List(start, other))
-        })( other_extr )
-      })}
+
+      case ListExpr(items) => swap(items map extract) map {
+        _.reduce {
+          (total_extr, other_extr) => total_extr.combine {
+            case (ListExpr(items), other) => ListExpr(other::items)
+            case (start, other) => ListExpr(List(start, other))
+          }(other_extr)
+        }
+      }
       case DictExpr(items) => ???
 
       case Bop(op, left, right) => for {
         left <- extract(left)
         right <- extract(right)
       } yield (Extraction(Bop(op, left.oldExpr, right.oldExpr), left.newExprs ++ right.newExprs))
-      case Uop(op, expr) => map2(extract(expr))({ Uop(op, _) })
+      case Uop(op, expr) => extract(expr) map { _ map { Uop(op, _) } }
 
       case Name(id) => Right(Extraction(tree, LinkedHashMap()))
       case _ => Right(Extraction(tree, LinkedHashMap()))
@@ -144,10 +147,9 @@ object Flatten {
 
   // applies flatten to every statement in function bodies.
   def remold(global: Global): Either[CutError, Global] = global match {
-    case FuncDecl(loc, typ, name, params, body) => flatten(body) map {
-      ls => { FuncDecl(loc, typ, name, params, Block(ls)) }
+    case GlobalFuncDecl(loc, typ, name, params, body) => flatten(body) map {
+      ls => { GlobalFuncDecl(loc, typ, name, params, Block(ls)) }
     }
-    case GlobalDecl(loc, to, typ, from) => Right(GlobalDecl(loc, to, typ, from))
-    case Import(loc, typ, name, params, jsCode) => Right(Import(loc, typ, name, params, jsCode))
+    case x => Right(x)
   }
 }
