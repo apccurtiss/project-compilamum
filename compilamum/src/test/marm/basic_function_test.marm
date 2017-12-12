@@ -1,8 +1,18 @@
-frontend x: Number = 1 + 2;
-frontend y: Number = x + 2;
-backend z: Number = 2;
+frontend submit(): Number {
+  x = foo(1,2);
+  y = foo(1,2);
+  z = foo(x,y);
+  print(z);
+  return z;
+}
 
-frontend foo(a: Number, b: Number): Void {
-  print(x + y + a + b);
-  7 - 8;
+frontend printit(): Void {
+  y = submit();
+  print(y);
+}
+
+backend foo(x: Number, y: Number): Number {
+  print(x);
+  print(y);
+  return x + y;
 }

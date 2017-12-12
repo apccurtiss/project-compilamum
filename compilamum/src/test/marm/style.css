@@ -1,0 +1,15 @@
+body {
+  background: #e6f7ff;
+}
+
+#text {
+  margin-top: 10%;
+  text-align: center;
+  font-family: "Comic Sans MS", "Comic Sans", cursive;
+}
+
+#counter {
+  margin-top: 10px;
+  text-align: center;
+  font-family: "Comic Sans MS", "Comic Sans", cursive;
+}

@@ -1,0 +1,16 @@
+frontend javascript
+    "(id, str) => { document.getElementById(id).innerHTML = str }"
+  as set(id: String, val: String): Void
+
+frontend pageload(): Void {
+  let x: Number = get_and_increment();
+  set("counter", x);
+}
+
+backend counter: Number = 0;
+
+backend get_and_increment(): Number {
+  counter = counter + 1;
+  print(counter);
+  return counter;
+}
